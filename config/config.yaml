@@ -30,8 +30,10 @@ platforms:
     name: "百度热搜"
   - id: "wallstreetcn-hot"
     name: "华尔街见闻"
-  - id: "thepaper"
-    name: "澎湃新闻"
+  - id: "cankaoxiaoxi"
+    name: "参考消息"
+  - id: "sputniknewscn"
+    name: "卫星通讯社"
   - id: "bilibili-hot-search"
     name: "bilibili 热搜"
   - id: "cls-hot"
@@ -46,6 +48,14 @@ platforms:
     name: "抖音"
   - id: "zhihu"
     name: "知乎"
+  - id: "ithome"
+    name: "IT之家"
+  - id: "juejin"
+    name: "掘金"
+  - id: "github"
+    name: "GitHub"
+  - id: "hackernews"
+    name: "Hacker News"
 
 
 # ===============================================================
