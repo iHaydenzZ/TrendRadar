@@ -38,7 +38,7 @@ class ParserService:
     @staticmethod
     def clean_title(title: str) -> str:
         """清理标题文本"""
-        title = re.sub(r'\s+', ' ', title)
+        title = re.sub(r"\s+", " ", title)
         title = title.strip()
         return title
 
@@ -56,7 +56,9 @@ class ParserService:
             date = datetime.now()
         return date.strftime("%Y-%m-%d")
 
-    def _get_db_path(self, date: datetime = None, db_type: str = "news") -> Optional[Path]:
+    def _get_db_path(
+        self, date: datetime = None, db_type: str = "news"
+    ) -> Optional[Path]:
         """
         获取数据库文件路径
 
@@ -79,7 +81,7 @@ class ParserService:
         self,
         date: datetime = None,
         platform_ids: Optional[List[str]] = None,
-        db_type: str = "news"
+        db_type: str = "news",
     ) -> Optional[Tuple[Dict, Dict, Dict]]:
         """
         从 SQLite 数据库读取数据
@@ -106,15 +108,19 @@ class ParserService:
             cursor = conn.cursor()
 
             if db_type == "news":
-                return self._read_news_from_sqlite(cursor, platform_ids, all_titles, id_to_name, all_timestamps)
+                return self._read_news_from_sqlite(
+                    cursor, platform_ids, all_titles, id_to_name, all_timestamps
+                )
             elif db_type == "rss":
-                return self._read_rss_from_sqlite(cursor, platform_ids, all_titles, id_to_name, all_timestamps)
+                return self._read_rss_from_sqlite(
+                    cursor, platform_ids, all_titles, id_to_name, all_timestamps
+                )
 
         except Exception as e:
             print(f"Warning: 从 SQLite 读取数据失败: {e}")
             return None
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.close()
 
     def _read_news_from_sqlite(
@@ -123,7 +129,7 @@ class ParserService:
         platform_ids: Optional[List[str]],
         all_titles: Dict,
         id_to_name: Dict,
-        all_timestamps: Dict
+        all_timestamps: Dict,
     ) -> Optional[Tuple[Dict, Dict, Dict]]:
         """从热榜数据库读取数据"""
         # 检查表是否存在
@@ -136,7 +142,7 @@ class ParserService:
 
         # 构建查询
         if platform_ids:
-            placeholders = ','.join(['?' for _ in platform_ids])
+            placeholders = ",".join(["?" for _ in platform_ids])
             query = f"""
                 SELECT n.id, n.platform_id, p.name as platform_name, n.title,
                        n.rank, n.url, n.mobile_url,
@@ -158,29 +164,32 @@ class ParserService:
         rows = cursor.fetchall()
 
         # 收集所有 news_item_id 用于查询历史排名
-        news_ids = [row['id'] for row in rows]
+        news_ids = [row["id"] for row in rows]
         rank_history_map = {}
 
         if news_ids:
             placeholders = ",".join("?" * len(news_ids))
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT news_item_id, rank FROM rank_history
                 WHERE news_item_id IN ({placeholders})
                 ORDER BY news_item_id, crawl_time
-            """, news_ids)
+            """,
+                news_ids,
+            )
 
             for rh_row in cursor.fetchall():
-                news_id = rh_row['news_item_id']
-                rank = rh_row['rank']
+                news_id = rh_row["news_item_id"]
+                rank = rh_row["rank"]
                 if news_id not in rank_history_map:
                     rank_history_map[news_id] = []
                 rank_history_map[news_id].append(rank)
 
         for row in rows:
-            news_id = row['id']
-            platform_id = row['platform_id']
-            platform_name = row['platform_name'] or platform_id
-            title = row['title']
+            news_id = row["id"]
+            platform_id = row["platform_id"]
+            platform_name = row["platform_name"] or platform_id
+            title = row["title"]
 
             if platform_id not in id_to_name:
                 id_to_name[platform_id] = platform_name
@@ -188,15 +197,15 @@ class ParserService:
             if platform_id not in all_titles:
                 all_titles[platform_id] = {}
 
-            ranks = rank_history_map.get(news_id, [row['rank']])
+            ranks = rank_history_map.get(news_id, [row["rank"]])
 
             all_titles[platform_id][title] = {
                 "ranks": ranks,
-                "url": row['url'] or "",
-                "mobileUrl": row['mobile_url'] or "",
-                "first_time": row['first_crawl_time'] or "",
-                "last_time": row['last_crawl_time'] or "",
-                "count": row['crawl_count'] or 1,
+                "url": row["url"] or "",
+                "mobileUrl": row["mobile_url"] or "",
+                "first_time": row["first_crawl_time"] or "",
+                "last_time": row["last_crawl_time"] or "",
+                "count": row["crawl_count"] or 1,
             }
 
         # 获取抓取时间作为 timestamps
@@ -205,8 +214,8 @@ class ParserService:
             ORDER BY crawl_time
         """)
         for row in cursor.fetchall():
-            crawl_time = row['crawl_time']
-            created_at = row['created_at']
+            crawl_time = row["crawl_time"]
+            created_at = row["created_at"]
             try:
                 ts = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S").timestamp()
             except (ValueError, TypeError):
@@ -224,7 +233,7 @@ class ParserService:
         feed_ids: Optional[List[str]],
         all_items: Dict,
         id_to_name: Dict,
-        all_timestamps: Dict
+        all_timestamps: Dict,
     ) -> Optional[Tuple[Dict, Dict, Dict]]:
         """从 RSS 数据库读取数据"""
         # 检查表是否存在
@@ -237,7 +246,7 @@ class ParserService:
 
         # 构建查询
         if feed_ids:
-            placeholders = ','.join(['?' for _ in feed_ids])
+            placeholders = ",".join(["?" for _ in feed_ids])
             query = f"""
                 SELECT i.id, i.feed_id, f.name as feed_name, i.title,
                        i.url, i.published_at, i.summary, i.author,
@@ -261,9 +270,9 @@ class ParserService:
         rows = cursor.fetchall()
 
         for row in rows:
-            feed_id = row['feed_id']
-            feed_name = row['feed_name'] or feed_id
-            title = row['title']
+            feed_id = row["feed_id"]
+            feed_name = row["feed_name"] or feed_id
+            title = row["title"]
 
             if feed_id not in id_to_name:
                 id_to_name[feed_id] = feed_name
@@ -272,13 +281,13 @@ class ParserService:
                 all_items[feed_id] = {}
 
             all_items[feed_id][title] = {
-                "url": row['url'] or "",
-                "published_at": row['published_at'] or "",
-                "summary": row['summary'] or "",
-                "author": row['author'] or "",
-                "first_time": row['first_crawl_time'] or "",
-                "last_time": row['last_crawl_time'] or "",
-                "count": row['crawl_count'] or 1,
+                "url": row["url"] or "",
+                "published_at": row["published_at"] or "",
+                "summary": row["summary"] or "",
+                "author": row["author"] or "",
+                "first_time": row["first_crawl_time"] or "",
+                "last_time": row["last_crawl_time"] or "",
+                "count": row["crawl_count"] or 1,
             }
 
         # 获取抓取时间
@@ -287,8 +296,8 @@ class ParserService:
             ORDER BY crawl_time
         """)
         for row in cursor.fetchall():
-            crawl_time = row['crawl_time']
-            created_at = row['created_at']
+            crawl_time = row["crawl_time"]
+            created_at = row["created_at"]
             try:
                 ts = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S").timestamp()
             except (ValueError, TypeError):
@@ -304,7 +313,7 @@ class ParserService:
         self,
         date: datetime = None,
         platform_ids: Optional[List[str]] = None,
-        db_type: str = "news"
+        db_type: str = "news",
     ) -> Tuple[Dict, Dict, Dict]:
         """
         读取指定日期的所有数据（带缓存）
@@ -321,7 +330,7 @@ class ParserService:
             DataNotFoundError: 数据不存在
         """
         date_str = self.get_date_folder_name(date)
-        platform_key = ','.join(sorted(platform_ids)) if platform_ids else 'all'
+        platform_key = ",".join(sorted(platform_ids)) if platform_ids else "all"
         cache_key = f"read_all:{db_type}:{date_str}:{platform_key}"
 
         is_today = (date is None) or (date.date() == datetime.now().date())
@@ -338,7 +347,7 @@ class ParserService:
 
         raise DataNotFoundError(
             f"未找到 {date_str} 的 {db_type} 数据",
-            suggestion="请先运行爬虫或检查日期是否正确"
+            suggestion="请先运行爬虫或检查日期是否正确",
         )
 
     def parse_yaml_config(self, config_path: str = None) -> dict:
@@ -420,13 +429,15 @@ class ParserService:
 
         dates = []
         for db_file in db_dir.glob("*.db"):
-            date_match = re.match(r'(\d{4}-\d{2}-\d{2})\.db$', db_file.name)
+            date_match = re.match(r"(\d{4}-\d{2}-\d{2})\.db$", db_file.name)
             if date_match:
                 dates.append(date_match.group(1))
 
         return sorted(dates, reverse=True)
 
-    def get_available_date_range(self, db_type: str = "news") -> Tuple[Optional[datetime], Optional[datetime]]:
+    def get_available_date_range(
+        self, db_type: str = "news"
+    ) -> Tuple[Optional[datetime], Optional[datetime]]:
         """
         获取可用的日期范围
 

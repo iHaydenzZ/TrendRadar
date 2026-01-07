@@ -45,22 +45,12 @@ class ConfigManagementTools:
             # 获取配置
             config = self.data_service.get_current_config(section=section)
 
-            return {
-                "config": config,
-                "section": section,
-                "success": True
-            }
+            return {"config": config, "section": section, "success": True}
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }

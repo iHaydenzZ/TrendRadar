@@ -94,7 +94,9 @@ class LocalStorageBackend(StorageBackend):
         db_dir.mkdir(parents=True, exist_ok=True)
         return db_dir / f"{date_str}.db"
 
-    def _get_connection(self, date: Optional[str] = None, db_type: str = "news") -> sqlite3.Connection:
+    def _get_connection(
+        self, date: Optional[str] = None, db_type: str = "news"
+    ) -> sqlite3.Connection:
         """
         获取数据库连接（带缓存）
 
@@ -167,13 +169,16 @@ class LocalStorageBackend(StorageBackend):
 
             # 首先同步平台信息到 platforms 表
             for source_id, source_name in data.id_to_name.items():
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO platforms (id, name, updated_at)
                     VALUES (?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         name = excluded.name,
                         updated_at = excluded.updated_at
-                """, (source_id, source_name, now_str))
+                """,
+                    (source_id, source_name, now_str),
+                )
 
             # 统计计数器
             new_count = 0
@@ -187,14 +192,19 @@ class LocalStorageBackend(StorageBackend):
                 for item in news_list:
                     try:
                         # 标准化 URL（去除动态参数，如微博的 band_rank）
-                        normalized_url = normalize_url(item.url, source_id) if item.url else ""
+                        normalized_url = (
+                            normalize_url(item.url, source_id) if item.url else ""
+                        )
 
                         # 检查是否已存在（通过标准化 URL + platform_id）
                         if normalized_url:
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 SELECT id, title FROM news_items
                                 WHERE url = ? AND platform_id = ?
-                            """, (normalized_url, source_id))
+                            """,
+                                (normalized_url, source_id),
+                            )
                             existing = cursor.fetchone()
 
                             if existing:
@@ -204,22 +214,34 @@ class LocalStorageBackend(StorageBackend):
                                 # 检查标题是否变化
                                 if existing_title != item.title:
                                     # 记录标题变更
-                                    cursor.execute("""
+                                    cursor.execute(
+                                        """
                                         INSERT INTO title_changes
                                         (news_item_id, old_title, new_title, changed_at)
                                         VALUES (?, ?, ?, ?)
-                                    """, (existing_id, existing_title, item.title, now_str))
+                                    """,
+                                        (
+                                            existing_id,
+                                            existing_title,
+                                            item.title,
+                                            now_str,
+                                        ),
+                                    )
                                     title_changed_count += 1
 
                                 # 记录排名历史
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rank_history
                                     (news_item_id, rank, crawl_time, created_at)
                                     VALUES (?, ?, ?, ?)
-                                """, (existing_id, item.rank, data.crawl_time, now_str))
+                                """,
+                                    (existing_id, item.rank, data.crawl_time, now_str),
+                                )
 
                                 # 更新现有记录
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     UPDATE news_items SET
                                         title = ?,
                                         rank = ?,
@@ -228,46 +250,82 @@ class LocalStorageBackend(StorageBackend):
                                         crawl_count = crawl_count + 1,
                                         updated_at = ?
                                     WHERE id = ?
-                                """, (item.title, item.rank, item.mobile_url,
-                                      data.crawl_time, now_str, existing_id))
+                                """,
+                                    (
+                                        item.title,
+                                        item.rank,
+                                        item.mobile_url,
+                                        data.crawl_time,
+                                        now_str,
+                                        existing_id,
+                                    ),
+                                )
                                 updated_count += 1
                             else:
                                 # 不存在，插入新记录（存储标准化后的 URL）
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO news_items
                                     (title, platform_id, rank, url, mobile_url,
                                      first_crawl_time, last_crawl_time, crawl_count,
                                      created_at, updated_at)
                                     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                                """, (item.title, source_id, item.rank, normalized_url,
-                                      item.mobile_url, data.crawl_time, data.crawl_time,
-                                      now_str, now_str))
+                                """,
+                                    (
+                                        item.title,
+                                        source_id,
+                                        item.rank,
+                                        normalized_url,
+                                        item.mobile_url,
+                                        data.crawl_time,
+                                        data.crawl_time,
+                                        now_str,
+                                        now_str,
+                                    ),
+                                )
                                 new_id = cursor.lastrowid
                                 # 记录初始排名
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rank_history
                                     (news_item_id, rank, crawl_time, created_at)
                                     VALUES (?, ?, ?, ?)
-                                """, (new_id, item.rank, data.crawl_time, now_str))
+                                """,
+                                    (new_id, item.rank, data.crawl_time, now_str),
+                                )
                                 new_count += 1
                         else:
                             # URL 为空的情况，直接插入（不做去重）
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO news_items
                                 (title, platform_id, rank, url, mobile_url,
                                  first_crawl_time, last_crawl_time, crawl_count,
                                  created_at, updated_at)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (item.title, source_id, item.rank, "",
-                                  item.mobile_url, data.crawl_time, data.crawl_time,
-                                  now_str, now_str))
+                            """,
+                                (
+                                    item.title,
+                                    source_id,
+                                    item.rank,
+                                    "",
+                                    item.mobile_url,
+                                    data.crawl_time,
+                                    data.crawl_time,
+                                    now_str,
+                                    now_str,
+                                ),
+                            )
                             new_id = cursor.lastrowid
                             # 记录初始排名
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO rank_history
                                 (news_item_id, rank, crawl_time, created_at)
                                 VALUES (?, ?, ?, ?)
-                            """, (new_id, item.rank, data.crawl_time, now_str))
+                            """,
+                                (new_id, item.rank, data.crawl_time, now_str),
+                            )
                             new_count += 1
 
                     except sqlite3.Error as e:
@@ -276,41 +334,56 @@ class LocalStorageBackend(StorageBackend):
             total_items = new_count + updated_count
 
             # 记录抓取信息
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO crawl_records
                 (crawl_time, total_items, created_at)
                 VALUES (?, ?, ?)
-            """, (data.crawl_time, total_items, now_str))
+            """,
+                (data.crawl_time, total_items, now_str),
+            )
 
             # 获取刚插入的 crawl_record 的 ID
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id FROM crawl_records WHERE crawl_time = ?
-            """, (data.crawl_time,))
+            """,
+                (data.crawl_time,),
+            )
             record_row = cursor.fetchone()
             if record_row:
                 crawl_record_id = record_row[0]
 
                 # 记录成功的来源
                 for source_id in success_sources:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO crawl_source_status
                         (crawl_record_id, platform_id, status)
                         VALUES (?, ?, 'success')
-                    """, (crawl_record_id, source_id))
+                    """,
+                        (crawl_record_id, source_id),
+                    )
 
                 # 记录失败的来源
                 for failed_id in data.failed_ids:
                     # 确保失败的平台也在 platforms 表中
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO platforms (id, name, updated_at)
                         VALUES (?, ?, ?)
-                    """, (failed_id, failed_id, now_str))
+                    """,
+                        (failed_id, failed_id, now_str),
+                    )
 
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO crawl_source_status
                         (crawl_record_id, platform_id, status)
                         VALUES (?, ?, 'failed')
-                    """, (crawl_record_id, failed_id))
+                    """,
+                        (crawl_record_id, failed_id),
+                    )
 
             conn.commit()
 
@@ -367,11 +440,14 @@ class LocalStorageBackend(StorageBackend):
             rank_history_map: Dict[int, List[int]] = {}
             if news_ids:
                 placeholders = ",".join("?" * len(news_ids))
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT news_item_id, rank FROM rank_history
                     WHERE news_item_id IN ({placeholders})
                     ORDER BY news_item_id, crawl_time
-                """, news_ids)
+                """,
+                    news_ids,
+                )
                 for rh_row in cursor.fetchall():
                     news_id, rank = rh_row[0], rh_row[1]
                     if news_id not in rank_history_map:
@@ -398,19 +474,21 @@ class LocalStorageBackend(StorageBackend):
                 # 获取排名历史，如果没有则使用当前排名
                 ranks = rank_history_map.get(news_id, [row[4]])
 
-                items[platform_id].append(NewsItem(
-                    title=title,
-                    source_id=platform_id,
-                    source_name=platform_name,
-                    rank=row[4],
-                    url=row[5] or "",
-                    mobile_url=row[6] or "",
-                    crawl_time=row[8],  # last_crawl_time
-                    ranks=ranks,
-                    first_time=row[7],  # first_crawl_time
-                    last_time=row[8],   # last_crawl_time
-                    count=row[9],       # crawl_count
-                ))
+                items[platform_id].append(
+                    NewsItem(
+                        title=title,
+                        source_id=platform_id,
+                        source_name=platform_name,
+                        rank=row[4],
+                        url=row[5] or "",
+                        mobile_url=row[6] or "",
+                        crawl_time=row[8],  # last_crawl_time
+                        ranks=ranks,
+                        first_time=row[7],  # first_crawl_time
+                        last_time=row[8],  # last_crawl_time
+                        count=row[9],  # crawl_count
+                    )
+                )
 
             final_items = items
 
@@ -477,14 +555,17 @@ class LocalStorageBackend(StorageBackend):
             latest_time = time_row[0]
 
             # 获取该时间的新闻数据（包含 id 用于查询排名历史）
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT n.id, n.title, n.platform_id, p.name as platform_name,
                        n.rank, n.url, n.mobile_url,
                        n.first_crawl_time, n.last_crawl_time, n.crawl_count
                 FROM news_items n
                 LEFT JOIN platforms p ON n.platform_id = p.id
                 WHERE n.last_crawl_time = ?
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             rows = cursor.fetchall()
             if not rows:
@@ -497,11 +578,14 @@ class LocalStorageBackend(StorageBackend):
             rank_history_map: Dict[int, List[int]] = {}
             if news_ids:
                 placeholders = ",".join("?" * len(news_ids))
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT news_item_id, rank FROM rank_history
                     WHERE news_item_id IN ({placeholders})
                     ORDER BY news_item_id, crawl_time
-                """, news_ids)
+                """,
+                    news_ids,
+                )
                 for rh_row in cursor.fetchall():
                     news_id, rank = rh_row[0], rh_row[1]
                     if news_id not in rank_history_map:
@@ -525,27 +609,32 @@ class LocalStorageBackend(StorageBackend):
                 # 获取排名历史，如果没有则使用当前排名
                 ranks = rank_history_map.get(news_id, [row[4]])
 
-                items[platform_id].append(NewsItem(
-                    title=row[1],
-                    source_id=platform_id,
-                    source_name=platform_name,
-                    rank=row[4],
-                    url=row[5] or "",
-                    mobile_url=row[6] or "",
-                    crawl_time=row[8],  # last_crawl_time
-                    ranks=ranks,
-                    first_time=row[7],  # first_crawl_time
-                    last_time=row[8],   # last_crawl_time
-                    count=row[9],       # crawl_count
-                ))
+                items[platform_id].append(
+                    NewsItem(
+                        title=row[1],
+                        source_id=platform_id,
+                        source_name=platform_name,
+                        rank=row[4],
+                        url=row[5] or "",
+                        mobile_url=row[6] or "",
+                        crawl_time=row[8],  # last_crawl_time
+                        ranks=ranks,
+                        first_time=row[7],  # first_crawl_time
+                        last_time=row[8],  # last_crawl_time
+                        count=row[9],  # crawl_count
+                    )
+                )
 
             # 获取失败的来源（针对最新一次抓取）
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT css.platform_id
                 FROM crawl_source_status css
                 JOIN crawl_records cr ON css.crawl_record_id = cr.id
                 WHERE cr.crawl_time = ? AND css.status = 'failed'
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             failed_ids = [row[0] for row in cursor.fetchall()]
 
@@ -594,12 +683,14 @@ class LocalStorageBackend(StorageBackend):
             for source_id, news_list in historical_data.items.items():
                 historical_titles[source_id] = set()
                 for item in news_list:
-                    first_time = getattr(item, 'first_time', item.crawl_time)
+                    first_time = getattr(item, "first_time", item.crawl_time)
                     if first_time < current_time:
                         historical_titles[source_id].add(item.title)
 
             # 检查是否有历史数据
-            has_historical_data = any(len(titles) > 0 for titles in historical_titles.values())
+            has_historical_data = any(
+                len(titles) > 0 for titles in historical_titles.values()
+            )
             if not has_historical_data:
                 # 第一次抓取，没有"新增"概念
                 return {}
@@ -678,7 +769,9 @@ class LocalStorageBackend(StorageBackend):
             print(f"[本地存储] 保存 TXT 快照失败: {e}")
             return None
 
-    def save_html_report(self, html_content: str, filename: str, is_summary: bool = False) -> Optional[str]:
+    def save_html_report(
+        self, html_content: str, filename: str, is_summary: bool = False
+    ) -> Optional[str]:
         """
         保存 HTML 报告
 
@@ -810,25 +903,25 @@ class LocalStorageBackend(StorageBackend):
         def parse_date_from_name(name: str) -> Optional[datetime]:
             """从文件名或目录名解析日期"""
             # 移除 .db 后缀
-            name = name.replace('.db', '')
+            name = name.replace(".db", "")
             try:
                 # ISO 格式: YYYY-MM-DD
-                date_match = re.match(r'(\d{4})-(\d{2})-(\d{2})', name)
+                date_match = re.match(r"(\d{4})-(\d{2})-(\d{2})", name)
                 if date_match:
                     return datetime(
                         int(date_match.group(1)),
                         int(date_match.group(2)),
                         int(date_match.group(3)),
-                        tzinfo=pytz.timezone("Asia/Shanghai")
+                        tzinfo=pytz.timezone("Asia/Shanghai"),
                     )
                 # 旧中文格式: YYYY年MM月DD日
-                date_match = re.match(r'(\d{4})年(\d{2})月(\d{2})日', name)
+                date_match = re.match(r"(\d{4})年(\d{2})月(\d{2})日", name)
                 if date_match:
                     return datetime(
                         int(date_match.group(1)),
                         int(date_match.group(2)),
                         int(date_match.group(3)),
-                        tzinfo=pytz.timezone("Asia/Shanghai")
+                        tzinfo=pytz.timezone("Asia/Shanghai"),
                     )
             except Exception:
                 pass
@@ -871,7 +964,7 @@ class LocalStorageBackend(StorageBackend):
                     continue
 
                 for date_folder in snapshot_dir.iterdir():
-                    if not date_folder.is_dir() or date_folder.name.startswith('.'):
+                    if not date_folder.is_dir() or date_folder.name.startswith("."):
                         continue
 
                     folder_date = parse_date_from_name(date_folder.name)
@@ -879,7 +972,9 @@ class LocalStorageBackend(StorageBackend):
                         try:
                             shutil.rmtree(date_folder)
                             deleted_count += 1
-                            print(f"[本地存储] 清理过期数据: {snapshot_type}/{date_folder.name}")
+                            print(
+                                f"[本地存储] 清理过期数据: {snapshot_type}/{date_folder.name}"
+                            )
                         except Exception as e:
                             print(f"[本地存储] 删除目录失败 {date_folder}: {e}")
 
@@ -908,9 +1003,12 @@ class LocalStorageBackend(StorageBackend):
 
             target_date = self._format_date_folder(date)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT pushed FROM push_records WHERE date = ?
-            """, (target_date,))
+            """,
+                (target_date,),
+            )
 
             row = cursor.fetchone()
             if row:
@@ -939,14 +1037,17 @@ class LocalStorageBackend(StorageBackend):
             target_date = self._format_date_folder(date)
             now_str = self._get_configured_time().strftime("%Y-%m-%d %H:%M:%S")
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO push_records (date, pushed, push_time, report_type, created_at)
                 VALUES (?, 1, ?, ?, ?)
                 ON CONFLICT(date) DO UPDATE SET
                     pushed = 1,
                     push_time = excluded.push_time,
                     report_type = excluded.report_type
-            """, (target_date, now_str, report_type, now_str))
+            """,
+                (target_date, now_str, report_type, now_str),
+            )
 
             conn.commit()
 
@@ -979,13 +1080,16 @@ class LocalStorageBackend(StorageBackend):
 
             # 同步 RSS 源信息到 rss_feeds 表
             for feed_id, feed_name in data.id_to_name.items():
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO rss_feeds (id, name, updated_at)
                     VALUES (?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         name = excluded.name,
                         updated_at = excluded.updated_at
-                """, (feed_id, feed_name, now_str))
+                """,
+                    (feed_id, feed_name, now_str),
+                )
 
             # 统计计数器
             new_count = 0
@@ -996,16 +1100,20 @@ class LocalStorageBackend(StorageBackend):
                     try:
                         # 检查是否已存在（通过 URL + feed_id）
                         if item.url:
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 SELECT id, title FROM rss_items
                                 WHERE url = ? AND feed_id = ?
-                            """, (item.url, feed_id))
+                            """,
+                                (item.url, feed_id),
+                            )
                             existing = cursor.fetchone()
 
                             if existing:
                                 # 已存在，更新记录
                                 existing_id = existing[0]
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     UPDATE rss_items SET
                                         title = ?,
                                         published_at = ?,
@@ -1015,74 +1123,124 @@ class LocalStorageBackend(StorageBackend):
                                         crawl_count = crawl_count + 1,
                                         updated_at = ?
                                     WHERE id = ?
-                                """, (item.title, item.published_at, item.summary,
-                                      item.author, data.crawl_time, now_str, existing_id))
+                                """,
+                                    (
+                                        item.title,
+                                        item.published_at,
+                                        item.summary,
+                                        item.author,
+                                        data.crawl_time,
+                                        now_str,
+                                        existing_id,
+                                    ),
+                                )
                                 updated_count += 1
                             else:
                                 # 不存在，插入新记录
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rss_items
                                     (title, feed_id, url, published_at, summary, author,
                                      first_crawl_time, last_crawl_time, crawl_count,
                                      created_at, updated_at)
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                                """, (item.title, feed_id, item.url, item.published_at,
-                                      item.summary, item.author, data.crawl_time,
-                                      data.crawl_time, now_str, now_str))
+                                """,
+                                    (
+                                        item.title,
+                                        feed_id,
+                                        item.url,
+                                        item.published_at,
+                                        item.summary,
+                                        item.author,
+                                        data.crawl_time,
+                                        data.crawl_time,
+                                        now_str,
+                                        now_str,
+                                    ),
+                                )
                                 new_count += 1
                         else:
                             # URL 为空，直接插入
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO rss_items
                                 (title, feed_id, url, published_at, summary, author,
                                  first_crawl_time, last_crawl_time, crawl_count,
                                  created_at, updated_at)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (item.title, feed_id, "", item.published_at,
-                                  item.summary, item.author, data.crawl_time,
-                                  data.crawl_time, now_str, now_str))
+                            """,
+                                (
+                                    item.title,
+                                    feed_id,
+                                    "",
+                                    item.published_at,
+                                    item.summary,
+                                    item.author,
+                                    data.crawl_time,
+                                    data.crawl_time,
+                                    now_str,
+                                    now_str,
+                                ),
+                            )
                             new_count += 1
 
                     except sqlite3.Error as e:
-                        print(f"[本地存储] 保存 RSS 条目失败 [{item.title[:30]}...]: {e}")
+                        print(
+                            f"[本地存储] 保存 RSS 条目失败 [{item.title[:30]}...]: {e}"
+                        )
 
             total_items = new_count + updated_count
 
             # 记录抓取信息
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO rss_crawl_records
                 (crawl_time, total_items, created_at)
                 VALUES (?, ?, ?)
-            """, (data.crawl_time, total_items, now_str))
+            """,
+                (data.crawl_time, total_items, now_str),
+            )
 
             # 记录抓取状态
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id FROM rss_crawl_records WHERE crawl_time = ?
-            """, (data.crawl_time,))
+            """,
+                (data.crawl_time,),
+            )
             record_row = cursor.fetchone()
             if record_row:
                 crawl_record_id = record_row[0]
 
                 # 记录成功的源
                 for feed_id in data.items.keys():
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO rss_crawl_status
                         (crawl_record_id, feed_id, status)
                         VALUES (?, ?, 'success')
-                    """, (crawl_record_id, feed_id))
+                    """,
+                        (crawl_record_id, feed_id),
+                    )
 
                 # 记录失败的源
                 for failed_id in data.failed_ids:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO rss_feeds (id, name, updated_at)
                         VALUES (?, ?, ?)
-                    """, (failed_id, failed_id, now_str))
+                    """,
+                        (failed_id, failed_id, now_str),
+                    )
 
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO rss_crawl_status
                         (crawl_record_id, feed_id, status)
                         VALUES (?, ?, 'failed')
-                    """, (crawl_record_id, failed_id))
+                    """,
+                        (crawl_record_id, failed_id),
+                    )
 
             conn.commit()
 
@@ -1139,19 +1297,21 @@ class LocalStorageBackend(StorageBackend):
                 if feed_id not in items:
                     items[feed_id] = []
 
-                items[feed_id].append(RSSItem(
-                    title=row[1],
-                    feed_id=feed_id,
-                    feed_name=feed_name,
-                    url=row[4] or "",
-                    published_at=row[5] or "",
-                    summary=row[6] or "",
-                    author=row[7] or "",
-                    crawl_time=row[9],
-                    first_time=row[8],
-                    last_time=row[9],
-                    count=row[10],
-                ))
+                items[feed_id].append(
+                    RSSItem(
+                        title=row[1],
+                        feed_id=feed_id,
+                        feed_name=feed_name,
+                        url=row[4] or "",
+                        published_at=row[5] or "",
+                        summary=row[6] or "",
+                        author=row[7] or "",
+                        crawl_time=row[9],
+                        first_time=row[8],
+                        last_time=row[9],
+                        count=row[10],
+                    )
+                )
 
             # 获取最新的抓取时间
             cursor.execute("""
@@ -1212,13 +1372,15 @@ class LocalStorageBackend(StorageBackend):
             for feed_id, rss_list in historical_data.items.items():
                 historical_urls[feed_id] = set()
                 for item in rss_list:
-                    first_time = getattr(item, 'first_time', item.crawl_time)
+                    first_time = getattr(item, "first_time", item.crawl_time)
                     if first_time < current_time:
                         if item.url:
                             historical_urls[feed_id].add(item.url)
 
             # 检查是否有历史数据
-            has_historical_data = any(len(urls) > 0 for urls in historical_urls.values())
+            has_historical_data = any(
+                len(urls) > 0 for urls in historical_urls.values()
+            )
             if not has_historical_data:
                 # 第一次抓取，没有"新增"概念
                 return {}
@@ -1272,7 +1434,8 @@ class LocalStorageBackend(StorageBackend):
             latest_time = time_row[0]
 
             # 获取该时间的 RSS 数据
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT i.id, i.title, i.feed_id, f.name as feed_name,
                        i.url, i.published_at, i.summary, i.author,
                        i.first_crawl_time, i.last_crawl_time, i.crawl_count
@@ -1280,7 +1443,9 @@ class LocalStorageBackend(StorageBackend):
                 LEFT JOIN rss_feeds f ON i.feed_id = f.id
                 WHERE i.last_crawl_time = ?
                 ORDER BY i.published_at DESC
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             rows = cursor.fetchall()
             if not rows:
@@ -1299,27 +1464,32 @@ class LocalStorageBackend(StorageBackend):
                 if feed_id not in items:
                     items[feed_id] = []
 
-                items[feed_id].append(RSSItem(
-                    title=row[1],
-                    feed_id=feed_id,
-                    feed_name=feed_name,
-                    url=row[4] or "",
-                    published_at=row[5] or "",
-                    summary=row[6] or "",
-                    author=row[7] or "",
-                    crawl_time=row[9],
-                    first_time=row[8],
-                    last_time=row[9],
-                    count=row[10],
-                ))
+                items[feed_id].append(
+                    RSSItem(
+                        title=row[1],
+                        feed_id=feed_id,
+                        feed_name=feed_name,
+                        url=row[4] or "",
+                        published_at=row[5] or "",
+                        summary=row[6] or "",
+                        author=row[7] or "",
+                        crawl_time=row[9],
+                        first_time=row[8],
+                        last_time=row[9],
+                        count=row[10],
+                    )
+                )
 
             # 获取失败的源（针对最新一次抓取）
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT cs.feed_id
                 FROM rss_crawl_status cs
                 JOIN rss_crawl_records cr ON cs.crawl_record_id = cr.id
                 WHERE cr.crawl_time = ? AND cs.status = 'failed'
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             failed_ids = [row[0] for row in cursor.fetchall()]
 

@@ -21,6 +21,7 @@ from trendradar.storage.manager import StorageManager, get_storage_manager
 # 远程后端可选导入（需要 boto3）
 try:
     from trendradar.storage.remote import RemoteStorageBackend
+
     HAS_REMOTE = True
 except ImportError:
     RemoteStorageBackend = None

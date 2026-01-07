@@ -19,18 +19,123 @@ class DataService:
 
     # 中文停用词列表（用于 auto_extract 模式）
     STOPWORDS = {
-        '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一',
-        '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有',
-        '看', '好', '自己', '这', '那', '来', '被', '与', '为', '对', '将', '从',
-        '以', '及', '等', '但', '或', '而', '于', '中', '由', '可', '可以', '已',
-        '已经', '还', '更', '最', '再', '因为', '所以', '如果', '虽然', '然而',
-        '什么', '怎么', '如何', '哪', '哪些', '多少', '几', '这个', '那个',
-        '他', '她', '它', '他们', '她们', '我们', '你们', '大家', '自己',
-        '这样', '那样', '怎样', '这么', '那么', '多么', '非常', '特别',
-        '应该', '可能', '能够', '需要', '必须', '一定', '肯定', '确实',
-        '正在', '已经', '曾经', '将要', '即将', '刚刚', '马上', '立刻',
-        '回应', '发布', '表示', '称', '曝', '官方', '最新', '重磅', '突发',
-        '热搜', '刷屏', '引发', '关注', '网友', '评论', '转发', '点赞'
+        "的",
+        "了",
+        "在",
+        "是",
+        "我",
+        "有",
+        "和",
+        "就",
+        "不",
+        "人",
+        "都",
+        "一",
+        "一个",
+        "上",
+        "也",
+        "很",
+        "到",
+        "说",
+        "要",
+        "去",
+        "你",
+        "会",
+        "着",
+        "没有",
+        "看",
+        "好",
+        "自己",
+        "这",
+        "那",
+        "来",
+        "被",
+        "与",
+        "为",
+        "对",
+        "将",
+        "从",
+        "以",
+        "及",
+        "等",
+        "但",
+        "或",
+        "而",
+        "于",
+        "中",
+        "由",
+        "可",
+        "可以",
+        "已",
+        "已经",
+        "还",
+        "更",
+        "最",
+        "再",
+        "因为",
+        "所以",
+        "如果",
+        "虽然",
+        "然而",
+        "什么",
+        "怎么",
+        "如何",
+        "哪",
+        "哪些",
+        "多少",
+        "几",
+        "这个",
+        "那个",
+        "他",
+        "她",
+        "它",
+        "他们",
+        "她们",
+        "我们",
+        "你们",
+        "大家",
+        "自己",
+        "这样",
+        "那样",
+        "怎样",
+        "这么",
+        "那么",
+        "多么",
+        "非常",
+        "特别",
+        "应该",
+        "可能",
+        "能够",
+        "需要",
+        "必须",
+        "一定",
+        "肯定",
+        "确实",
+        "正在",
+        "已经",
+        "曾经",
+        "将要",
+        "即将",
+        "刚刚",
+        "马上",
+        "立刻",
+        "回应",
+        "发布",
+        "表示",
+        "称",
+        "曝",
+        "官方",
+        "最新",
+        "重磅",
+        "突发",
+        "热搜",
+        "刷屏",
+        "引发",
+        "关注",
+        "网友",
+        "评论",
+        "转发",
+        "点赞",
     }
 
     def __init__(self, project_root: str = None):
@@ -47,7 +152,7 @@ class DataService:
         self,
         platforms: Optional[List[str]] = None,
         limit: int = 50,
-        include_url: bool = False
+        include_url: bool = False,
     ) -> List[Dict]:
         """
         获取最新一批爬取的新闻数据
@@ -71,8 +176,7 @@ class DataService:
 
         # 读取今天的数据
         all_titles, id_to_name, timestamps = self.parser.read_all_titles_for_date(
-            date=None,
-            platform_ids=platforms
+            date=None, platform_ids=platforms
         )
 
         # 获取最新的文件时间
@@ -96,7 +200,7 @@ class DataService:
                     "platform": platform_id,
                     "platform_name": platform_name,
                     "rank": rank,
-                    "timestamp": fetch_time.strftime("%Y-%m-%d %H:%M:%S")
+                    "timestamp": fetch_time.strftime("%Y-%m-%d %H:%M:%S"),
                 }
 
                 # 条件性添加 URL 字段
@@ -122,7 +226,7 @@ class DataService:
         target_date: datetime,
         platforms: Optional[List[str]] = None,
         limit: int = 50,
-        include_url: bool = False
+        include_url: bool = False,
     ) -> List[Dict]:
         """
         按指定日期获取新闻
@@ -149,15 +253,16 @@ class DataService:
         """
         # 尝试从缓存获取
         date_str = target_date.strftime("%Y-%m-%d")
-        cache_key = f"news_by_date:{date_str}:{','.join(platforms or [])}:{limit}:{include_url}"
+        cache_key = (
+            f"news_by_date:{date_str}:{','.join(platforms or [])}:{limit}:{include_url}"
+        )
         cached = self.cache.get(cache_key, ttl=1800)  # 30分钟缓存
         if cached:
             return cached
 
         # 读取指定日期的数据
         all_titles, id_to_name, timestamps = self.parser.read_all_titles_for_date(
-            date=target_date,
-            platform_ids=platforms
+            date=target_date, platform_ids=platforms
         )
 
         # 转换为新闻列表
@@ -167,7 +272,9 @@ class DataService:
 
             for title, info in titles.items():
                 # 计算平均排名
-                avg_rank = sum(info["ranks"]) / len(info["ranks"]) if info["ranks"] else 0
+                avg_rank = (
+                    sum(info["ranks"]) / len(info["ranks"]) if info["ranks"] else 0
+                )
 
                 news_item = {
                     "title": title,
@@ -176,7 +283,7 @@ class DataService:
                     "rank": info["ranks"][0] if info["ranks"] else 0,
                     "avg_rank": round(avg_rank, 2),
                     "count": len(info["ranks"]),
-                    "date": date_str
+                    "date": date_str,
                 }
 
                 # 条件性添加 URL 字段
@@ -202,7 +309,7 @@ class DataService:
         keyword: str,
         date_range: Optional[Tuple[datetime, datetime]] = None,
         platforms: Optional[List[str]] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Dict:
         """
         按关键词搜索新闻
@@ -235,8 +342,7 @@ class DataService:
         while current_date <= end_date:
             try:
                 all_titles, id_to_name, _ = self.parser.read_all_titles_for_date(
-                    date=current_date,
-                    platform_ids=platforms
+                    date=current_date, platform_ids=platforms
                 )
 
                 # 搜索包含关键词的标题
@@ -246,19 +352,25 @@ class DataService:
                     for title, info in titles.items():
                         if keyword.lower() in title.lower():
                             # 计算平均排名
-                            avg_rank = sum(info["ranks"]) / len(info["ranks"]) if info["ranks"] else 0
+                            avg_rank = (
+                                sum(info["ranks"]) / len(info["ranks"])
+                                if info["ranks"]
+                                else 0
+                            )
 
-                            results.append({
-                                "title": title,
-                                "platform": platform_id,
-                                "platform_name": platform_name,
-                                "ranks": info["ranks"],
-                                "count": len(info["ranks"]),
-                                "avg_rank": round(avg_rank, 2),
-                                "url": info.get("url", ""),
-                                "mobileUrl": info.get("mobileUrl", ""),
-                                "date": current_date.strftime("%Y-%m-%d")
-                            })
+                            results.append(
+                                {
+                                    "title": title,
+                                    "platform": platform_id,
+                                    "platform_name": platform_name,
+                                    "ranks": info["ranks"],
+                                    "count": len(info["ranks"]),
+                                    "avg_rank": round(avg_rank, 2),
+                                    "url": info.get("url", ""),
+                                    "mobileUrl": info.get("mobileUrl", ""),
+                                    "date": current_date.strftime("%Y-%m-%d"),
+                                }
+                            )
 
                             platform_distribution[platform_id] += 1
 
@@ -272,7 +384,7 @@ class DataService:
         if not results:
             raise DataNotFoundError(
                 f"未找到包含关键词 '{keyword}' 的新闻",
-                suggestion="请尝试其他关键词或扩大日期范围"
+                suggestion="请尝试其他关键词或扩大日期范围",
             )
 
         # 计算统计信息
@@ -294,8 +406,8 @@ class DataService:
             "statistics": {
                 "platform_distribution": dict(platform_distribution),
                 "avg_rank": round(avg_rank, 2),
-                "keyword": keyword
-            }
+                "keyword": keyword,
+            },
         }
 
     def _extract_words_from_title(self, title: str, min_length: int = 2) -> List[str]:
@@ -310,28 +422,28 @@ class DataService:
             关键词列表
         """
         # 移除URL和特殊字符
-        title = re.sub(r'http[s]?://\S+', '', title)
-        title = re.sub(r'\[.*?\]', '', title)  # 移除方括号内容
-        title = re.sub(r'[【】《》「」『』""''・·•]', '', title)  # 移除中文标点
+        title = re.sub(r"http[s]?://\S+", "", title)
+        title = re.sub(r"\[.*?\]", "", title)  # 移除方括号内容
+        title = re.sub(r'[【】《》「」『』""' "・·•]", "", title)  # 移除中文标点
 
         # 使用正则表达式分词（中文和英文）
         # 匹配连续的中文字符或英文单词
-        words = re.findall(r'[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}[a-zA-Z0-9]*', title)
+        words = re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}[a-zA-Z0-9]*", title)
 
         # 过滤停用词和短词
         keywords = [
-            word for word in words
-            if word and len(word) >= min_length and word.lower() not in self.STOPWORDS
+            word
+            for word in words
+            if word
+            and len(word) >= min_length
+            and word.lower() not in self.STOPWORDS
             and word not in self.STOPWORDS
         ]
 
         return keywords
 
     def get_trending_topics(
-        self,
-        top_n: int = 10,
-        mode: str = "current",
-        extract_mode: str = "keywords"
+        self, top_n: int = 10, mode: str = "current", extract_mode: str = "keywords"
     ) -> Dict:
         """
         获取热点话题统计
@@ -362,8 +474,7 @@ class DataService:
 
         if not all_titles:
             raise DataNotFoundError(
-                "未找到今天的新闻数据",
-                suggestion="请确保爬虫已经运行并生成了数据"
+                "未找到今天的新闻数据", suggestion="请确保爬虫已经运行并生成了数据"
             )
 
         # 根据 mode 选择要处理的标题数据
@@ -410,13 +521,15 @@ class DataService:
         for keyword, frequency in top_keywords:
             matched_news = keyword_to_news.get(keyword, [])
 
-            topics.append({
-                "keyword": keyword,
-                "frequency": frequency,
-                "matched_news": len(set(matched_news)),  # 去重后的新闻数量
-                "trend": "stable",
-                "weight_score": 0.0
-            })
+            topics.append(
+                {
+                    "keyword": keyword,
+                    "frequency": frequency,
+                    "matched_news": len(set(matched_news)),  # 去重后的新闻数量
+                    "trend": "stable",
+                    "weight_score": 0.0,
+                }
+            )
 
         # 构建结果
         result = {
@@ -425,7 +538,7 @@ class DataService:
             "mode": mode,
             "extract_mode": extract_mode,
             "total_keywords": len(word_frequency),
-            "description": self._get_mode_description(mode, extract_mode)
+            "description": self._get_mode_description(mode, extract_mode),
         }
 
         # 缓存结果
@@ -435,14 +548,13 @@ class DataService:
 
     def _get_mode_description(self, mode: str, extract_mode: str = "keywords") -> str:
         """获取模式描述"""
-        mode_desc = {
-            "daily": "当日累计统计",
-            "current": "最新一批统计"
-        }.get(mode, "未知时间模式")
+        mode_desc = {"daily": "当日累计统计", "current": "最新一批统计"}.get(
+            mode, "未知时间模式"
+        )
 
         extract_desc = {
             "keywords": "基于预设关注词",
-            "auto_extract": "自动提取高频词"
+            "auto_extract": "自动提取高频词",
         }.get(extract_mode, "未知提取模式")
 
         return f"{mode_desc} - {extract_desc}"
@@ -480,7 +592,7 @@ class DataService:
                 "use_proxy": advanced_crawler.get("use_proxy", False),
                 "request_interval": advanced_crawler.get("request_interval", 1),
                 "retry_times": 3,
-                "platforms": [p["id"] for p in config_data.get("platforms", [])]
+                "platforms": [p["id"] for p in config_data.get("platforms", [])],
             }
 
         if section == "all" or section == "push":
@@ -490,7 +602,7 @@ class DataService:
                 "enable_notification": notification.get("enabled", True),
                 "enabled_channels": [],
                 "message_batch_size": batch_size.get("default", 4000),
-                "push_window": notification.get("push_window", {})
+                "push_window": notification.get("push_window", {}),
             }
 
             # 检测已配置的通知渠道
@@ -505,7 +617,7 @@ class DataService:
         if section == "all" or section == "keywords":
             keywords_config = {
                 "word_groups": word_groups,
-                "total_groups": len(word_groups)
+                "total_groups": len(word_groups),
             }
 
         if section == "all" or section == "weights":
@@ -513,7 +625,7 @@ class DataService:
             weights_config = {
                 "rank_weight": weight.get("rank", 0.6),
                 "frequency_weight": weight.get("frequency", 0.3),
-                "hotness_weight": weight.get("hotness", 0.1)
+                "hotness_weight": weight.get("hotness", 0.1),
             }
 
         # 组装结果
@@ -522,7 +634,7 @@ class DataService:
                 "crawler": crawler_config,
                 "push": push_config,
                 "keywords": keywords_config,
-                "weights": weights_config
+                "weights": weights_config,
             }
         elif section == "crawler":
             result = crawler_config
@@ -561,7 +673,7 @@ class DataService:
 
         # 遍历日期文件夹
         for date_folder in output_dir.iterdir():
-            if date_folder.is_dir() and not date_folder.name.startswith('.'):
+            if date_folder.is_dir() and not date_folder.name.startswith("."):
                 folder_date = self._parse_date_folder_name(date_folder.name)
                 if folder_date:
                     available_dates.append(folder_date)
@@ -586,25 +698,25 @@ class DataService:
             datetime 对象，解析失败返回 None
         """
         # 尝试中文格式：YYYY年MM月DD日
-        chinese_match = re.match(r'(\d{4})年(\d{2})月(\d{2})日', folder_name)
+        chinese_match = re.match(r"(\d{4})年(\d{2})月(\d{2})日", folder_name)
         if chinese_match:
             try:
                 return datetime(
                     int(chinese_match.group(1)),
                     int(chinese_match.group(2)),
-                    int(chinese_match.group(3))
+                    int(chinese_match.group(3)),
                 )
             except ValueError:
                 pass
 
         # 尝试 ISO 格式：YYYY-MM-DD
-        iso_match = re.match(r'(\d{4})-(\d{2})-(\d{2})', folder_name)
+        iso_match = re.match(r"(\d{4})-(\d{2})-(\d{2})", folder_name)
         if iso_match:
             try:
                 return datetime(
                     int(iso_match.group(1)),
                     int(iso_match.group(2)),
-                    int(iso_match.group(3))
+                    int(iso_match.group(3)),
                 )
             except ValueError:
                 pass
@@ -629,7 +741,7 @@ class DataService:
         if output_dir.exists():
             # 遍历日期文件夹
             for date_folder in output_dir.iterdir():
-                if date_folder.is_dir() and not date_folder.name.startswith('.'):
+                if date_folder.is_dir() and not date_folder.name.startswith("."):
                     # 解析日期（兼容中文和ISO格式）
                     folder_date = self._parse_date_folder_name(date_folder.name)
                     if folder_date:
@@ -656,15 +768,19 @@ class DataService:
         return {
             "system": {
                 "version": version,
-                "project_root": str(self.parser.project_root)
+                "project_root": str(self.parser.project_root),
             },
             "data": {
                 "total_storage": f"{total_storage / 1024 / 1024:.2f} MB",
-                "oldest_record": oldest_record.strftime("%Y-%m-%d") if oldest_record else None,
-                "latest_record": latest_record.strftime("%Y-%m-%d") if latest_record else None,
+                "oldest_record": oldest_record.strftime("%Y-%m-%d")
+                if oldest_record
+                else None,
+                "latest_record": latest_record.strftime("%Y-%m-%d")
+                if latest_record
+                else None,
             },
             "cache": self.cache.get_stats(),
-            "health": "healthy"
+            "health": "healthy",
         }
 
     # ========================================
@@ -675,7 +791,7 @@ class DataService:
         self,
         feeds: Optional[List[str]] = None,
         limit: int = 50,
-        include_summary: bool = False
+        include_summary: bool = False,
     ) -> List[Dict]:
         """
         获取最新的 RSS 数据
@@ -698,9 +814,7 @@ class DataService:
 
         # 读取今天的 RSS 数据
         all_items, id_to_name, timestamps = self.parser.read_all_titles_for_date(
-            date=None,
-            platform_ids=feeds,
-            db_type="rss"
+            date=None, platform_ids=feeds, db_type="rss"
         )
 
         # 获取最新的抓取时间
@@ -723,7 +837,7 @@ class DataService:
                     "url": info.get("url", ""),
                     "published_at": info.get("published_at", ""),
                     "author": info.get("author", ""),
-                    "fetch_time": fetch_time.strftime("%Y-%m-%d %H:%M:%S")
+                    "fetch_time": fetch_time.strftime("%Y-%m-%d %H:%M:%S"),
                 }
 
                 if include_summary:
@@ -748,7 +862,7 @@ class DataService:
         feeds: Optional[List[str]] = None,
         days: int = 7,
         limit: int = 50,
-        include_summary: bool = False
+        include_summary: bool = False,
     ) -> List[Dict]:
         """
         搜索 RSS 数据
@@ -776,9 +890,7 @@ class DataService:
 
             try:
                 all_items, id_to_name, _ = self.parser.read_all_titles_for_date(
-                    date=target_date,
-                    platform_ids=feeds,
-                    db_type="rss"
+                    date=target_date, platform_ids=feeds, db_type="rss"
                 )
 
                 for feed_id, items in all_items.items():
@@ -787,7 +899,10 @@ class DataService:
                     for title, info in items.items():
                         # 关键词匹配（标题或摘要）
                         summary = info.get("summary", "")
-                        if keyword.lower() in title.lower() or keyword.lower() in summary.lower():
+                        if (
+                            keyword.lower() in title.lower()
+                            or keyword.lower() in summary.lower()
+                        ):
                             rss_item = {
                                 "title": title,
                                 "feed_id": feed_id,
@@ -795,7 +910,7 @@ class DataService:
                                 "url": info.get("url", ""),
                                 "published_at": info.get("published_at", ""),
                                 "author": info.get("author", ""),
-                                "date": target_date.strftime("%Y-%m-%d")
+                                "date": target_date.strftime("%Y-%m-%d"),
                             }
 
                             if include_summary:
@@ -836,15 +951,13 @@ class DataService:
         today_stats = {}
         try:
             all_items, id_to_name, _ = self.parser.read_all_titles_for_date(
-                date=None,
-                platform_ids=None,
-                db_type="rss"
+                date=None, platform_ids=None, db_type="rss"
             )
 
             for feed_id, items in all_items.items():
                 today_stats[feed_id] = {
                     "name": id_to_name.get(feed_id, feed_id),
-                    "item_count": len(items)
+                    "item_count": len(items),
                 }
 
         except DataNotFoundError:
@@ -854,7 +967,7 @@ class DataService:
             "available_dates": available_dates[:10],  # 最近 10 天
             "total_dates": len(available_dates),
             "today_feeds": today_stats,
-            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         self.cache.set(cache_key, result)

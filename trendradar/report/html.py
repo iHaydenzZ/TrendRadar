@@ -738,7 +738,9 @@ def render_html_content(
                     else:
                         rank_text = f"{min_rank}-{max_rank}"
 
-                    stats_html += f'<span class="rank-num {rank_class}">{rank_text}</span>'
+                    stats_html += (
+                        f'<span class="rank-num {rank_class}">{rank_text}</span>'
+                    )
 
                 # 处理时间显示
                 time_display = title_data.get("time_display", "")
@@ -785,7 +787,7 @@ def render_html_content(
     if report_data["new_titles"]:
         new_titles_html += f"""
                 <div class="new-section">
-                    <div class="new-section-title">本次新增热点 (共 {report_data['total_new_count']} 条)</div>"""
+                    <div class="new-section-title">本次新增热点 (共 {report_data["total_new_count"]} 条)</div>"""
 
         for source_data in report_data["new_titles"]:
             escaped_source = html_escape(source_data["source_name"])
@@ -912,13 +914,19 @@ def render_html_content(
                             <div class="rss-meta">"""
 
                 if time_display:
-                    rss_html += f'<span class="rss-time">{html_escape(time_display)}</span>'
+                    rss_html += (
+                        f'<span class="rss-time">{html_escape(time_display)}</span>'
+                    )
 
                 if source_name:
-                    rss_html += f'<span class="rss-author">{html_escape(source_name)}</span>'
+                    rss_html += (
+                        f'<span class="rss-author">{html_escape(source_name)}</span>'
+                    )
 
                 if is_new:
-                    rss_html += '<span class="rss-author" style="color: #dc2626;">NEW</span>'
+                    rss_html += (
+                        '<span class="rss-author" style="color: #dc2626;">NEW</span>'
+                    )
 
                 rss_html += """
                             </div>
@@ -943,8 +951,12 @@ def render_html_content(
         return rss_html
 
     # 生成 RSS 统计和新增 HTML
-    rss_stats_html = render_rss_stats_html(rss_items, "RSS 订阅更新") if rss_items else ""
-    rss_new_html = render_rss_stats_html(rss_new_items, "RSS 新增更新") if rss_new_items else ""
+    rss_stats_html = (
+        render_rss_stats_html(rss_items, "RSS 订阅更新") if rss_items else ""
+    )
+    rss_new_html = (
+        render_rss_stats_html(rss_new_items, "RSS 新增更新") if rss_new_items else ""
+    )
 
     # 根据配置决定内容顺序（与推送逻辑一致）
     if reverse_content_order:
@@ -970,7 +982,7 @@ def render_html_content(
         html += f"""
                     <br>
                     <span style="color: #ea580c; font-weight: 500;">
-                        发现新版本 {update_info['remote_version']}，当前版本 {update_info['current_version']}
+                        发现新版本 {update_info["remote_version"]}，当前版本 {update_info["current_version"]}
                     </span>"""
 
     html += """

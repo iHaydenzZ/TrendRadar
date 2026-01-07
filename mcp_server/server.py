@@ -21,7 +21,7 @@ from .utils.errors import MCPError
 
 
 # 创建 FastMCP 2.0 应用
-mcp = FastMCP('trendradar-news')
+mcp = FastMCP("trendradar-news")
 
 # 全局工具实例（在第一次请求时初始化）
 _tools_instances = {}
@@ -30,21 +30,20 @@ _tools_instances = {}
 def _get_tools(project_root: Optional[str] = None):
     """获取或创建工具实例（单例模式）"""
     if not _tools_instances:
-        _tools_instances['data'] = DataQueryTools(project_root)
-        _tools_instances['analytics'] = AnalyticsTools(project_root)
-        _tools_instances['search'] = SearchTools(project_root)
-        _tools_instances['config'] = ConfigManagementTools(project_root)
-        _tools_instances['system'] = SystemManagementTools(project_root)
-        _tools_instances['storage'] = StorageSyncTools(project_root)
+        _tools_instances["data"] = DataQueryTools(project_root)
+        _tools_instances["analytics"] = AnalyticsTools(project_root)
+        _tools_instances["search"] = SearchTools(project_root)
+        _tools_instances["config"] = ConfigManagementTools(project_root)
+        _tools_instances["system"] = SystemManagementTools(project_root)
+        _tools_instances["storage"] = StorageSyncTools(project_root)
     return _tools_instances
 
 
 # ==================== 日期解析工具（优先调用）====================
 
+
 @mcp.tool
-async def resolve_date_range(
-    expression: str
-) -> str:
+async def resolve_date_range(expression: str) -> str:
     """
     【推荐优先调用】将自然语言日期表达式解析为标准日期范围
 
@@ -96,27 +95,23 @@ async def resolve_date_range(
         result = DateParser.resolve_date_range_expression(expression)
         return json.dumps(result, ensure_ascii=False, indent=2)
     except MCPError as e:
-        return json.dumps({
-            "success": False,
-            "error": e.to_dict()
-        }, ensure_ascii=False, indent=2)
+        return json.dumps(
+            {"success": False, "error": e.to_dict()}, ensure_ascii=False, indent=2
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": {
-                "code": "INTERNAL_ERROR",
-                "message": str(e)
-            }
-        }, ensure_ascii=False, indent=2)
+        return json.dumps(
+            {"success": False, "error": {"code": "INTERNAL_ERROR", "message": str(e)}},
+            ensure_ascii=False,
+            indent=2,
+        )
 
 
 # ==================== 数据查询工具 ====================
 
+
 @mcp.tool
 async def get_latest_news(
-    platforms: Optional[List[str]] = None,
-    limit: int = 50,
-    include_url: bool = False
+    platforms: Optional[List[str]] = None, limit: int = 50, include_url: bool = False
 ) -> str:
     """
     获取最新一批爬取的新闻数据，快速了解当前热点
@@ -146,15 +141,15 @@ async def get_latest_news(
     **注意**：如果用户询问"为什么只显示了部分"，说明他们需要完整数据
     """
     tools = _get_tools()
-    result = tools['data'].get_latest_news(platforms=platforms, limit=limit, include_url=include_url)
+    result = tools["data"].get_latest_news(
+        platforms=platforms, limit=limit, include_url=include_url
+    )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 @mcp.tool
 async def get_trending_topics(
-    top_n: int = 10,
-    mode: str = 'current',
-    extract_mode: str = 'keywords'
+    top_n: int = 10, mode: str = "current", extract_mode: str = "keywords"
 ) -> str:
     """
     获取热点话题统计
@@ -176,17 +171,18 @@ async def get_trending_topics(
         - 自动提取热点: get_trending_topics(extract_mode="auto_extract", top_n=20)
     """
     tools = _get_tools()
-    result = tools['data'].get_trending_topics(top_n=top_n, mode=mode, extract_mode=extract_mode)
+    result = tools["data"].get_trending_topics(
+        top_n=top_n, mode=mode, extract_mode=extract_mode
+    )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 # ==================== RSS 数据查询工具 ====================
 
+
 @mcp.tool
 async def get_latest_rss(
-    feeds: Optional[List[str]] = None,
-    limit: int = 50,
-    include_summary: bool = False
+    feeds: Optional[List[str]] = None, limit: int = 50, include_summary: bool = False
 ) -> str:
     """
     获取最新的 RSS 订阅数据
@@ -219,7 +215,9 @@ async def get_latest_rss(
         - 包含摘要: get_latest_rss(include_summary=True, limit=20)
     """
     tools = _get_tools()
-    result = tools['data'].get_latest_rss(feeds=feeds, limit=limit, include_summary=include_summary)
+    result = tools["data"].get_latest_rss(
+        feeds=feeds, limit=limit, include_summary=include_summary
+    )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -229,7 +227,7 @@ async def search_rss(
     feeds: Optional[List[str]] = None,
     days: int = 7,
     limit: int = 50,
-    include_summary: bool = False
+    include_summary: bool = False,
 ) -> str:
     """
     搜索 RSS 数据
@@ -252,12 +250,12 @@ async def search_rss(
         - search_rss(keyword="machine learning", feeds=['hacker-news'], days=14)
     """
     tools = _get_tools()
-    result = tools['data'].search_rss(
+    result = tools["data"].search_rss(
         keyword=keyword,
         feeds=feeds,
         days=days,
         limit=limit,
-        include_summary=include_summary
+        include_summary=include_summary,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -281,7 +279,7 @@ async def get_rss_feeds_status() -> str:
         - get_rss_feeds_status()  # 查看所有 RSS 源状态
     """
     tools = _get_tools()
-    result = tools['data'].get_rss_feeds_status()
+    result = tools["data"].get_rss_feeds_status()
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -290,7 +288,7 @@ async def get_news_by_date(
     date_range: Optional[Union[Dict[str, str], str]] = None,
     platforms: Optional[List[str]] = None,
     limit: int = 50,
-    include_url: bool = False
+    include_url: bool = False,
 ) -> str:
     """
     获取指定日期的新闻数据，用于历史数据分析和对比
@@ -325,17 +323,14 @@ async def get_news_by_date(
     **注意**：如果用户询问"为什么只显示了部分"，说明他们需要完整数据
     """
     tools = _get_tools()
-    result = tools['data'].get_news_by_date(
-        date_range=date_range,
-        platforms=platforms,
-        limit=limit,
-        include_url=include_url
+    result = tools["data"].get_news_by_date(
+        date_range=date_range, platforms=platforms, limit=limit, include_url=include_url
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
-
 # ==================== 高级数据分析工具 ====================
+
 
 @mcp.tool
 async def analyze_topic_trend(
@@ -346,7 +341,7 @@ async def analyze_topic_trend(
     spike_threshold: float = 3.0,
     time_window: int = 24,
     lookahead_hours: int = 6,
-    confidence_threshold: float = 0.7
+    confidence_threshold: float = 0.7,
 ) -> str:
     """
     统一话题趋势分析工具 - 整合多种趋势分析模式
@@ -388,7 +383,7 @@ async def analyze_topic_trend(
         2. analyze_topic_trend(topic="特斯拉", analysis_type="lifecycle", date_range=...)
     """
     tools = _get_tools()
-    result = tools['analytics'].analyze_topic_trend_unified(
+    result = tools["analytics"].analyze_topic_trend_unified(
         topic=topic,
         analysis_type=analysis_type,
         date_range=date_range,
@@ -396,7 +391,7 @@ async def analyze_topic_trend(
         threshold=spike_threshold,
         time_window=time_window,
         lookahead_hours=lookahead_hours,
-        confidence_threshold=confidence_threshold
+        confidence_threshold=confidence_threshold,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -407,7 +402,7 @@ async def analyze_data_insights(
     topic: Optional[str] = None,
     date_range: Optional[Union[Dict[str, str], str]] = None,
     min_frequency: int = 3,
-    top_n: int = 20
+    top_n: int = 20,
 ) -> str:
     """
     统一数据洞察分析工具 - 整合多种数据分析模式
@@ -434,12 +429,12 @@ async def analyze_data_insights(
         - analyze_data_insights(insight_type="keyword_cooccur", min_frequency=5, top_n=15)
     """
     tools = _get_tools()
-    result = tools['analytics'].analyze_data_insights_unified(
+    result = tools["analytics"].analyze_data_insights_unified(
         insight_type=insight_type,
         topic=topic,
         date_range=date_range,
         min_frequency=min_frequency,
-        top_n=top_n
+        top_n=top_n,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -451,7 +446,7 @@ async def analyze_sentiment(
     date_range: Optional[Union[Dict[str, str], str]] = None,
     limit: int = 50,
     sort_by_weight: bool = True,
-    include_url: bool = False
+    include_url: bool = False,
 ) -> str:
     """
     分析新闻的情感倾向和热度趋势
@@ -497,13 +492,13 @@ async def analyze_sentiment(
     - 仅在用户明确要求"总结"或"挑重点"时才进行筛选
     """
     tools = _get_tools()
-    result = tools['analytics'].analyze_sentiment(
+    result = tools["analytics"].analyze_sentiment(
         topic=topic,
         platforms=platforms,
         date_range=date_range,
         limit=limit,
         sort_by_weight=sort_by_weight,
-        include_url=include_url
+        include_url=include_url,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -514,7 +509,7 @@ async def find_related_news(
     date_range: Optional[Union[Dict[str, str], str]] = None,
     threshold: float = 0.5,
     limit: int = 50,
-    include_url: bool = False
+    include_url: bool = False,
 ) -> str:
     """
     查找与指定新闻标题相关的其他新闻（支持当天和历史数据）
@@ -546,20 +541,19 @@ async def find_related_news(
     - 仅在用户明确要求"总结"时才进行筛选
     """
     tools = _get_tools()
-    result = tools['search'].find_related_news_unified(
+    result = tools["search"].find_related_news_unified(
         reference_title=reference_title,
         date_range=date_range,
         threshold=threshold,
         limit=limit,
-        include_url=include_url
+        include_url=include_url,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 @mcp.tool
 async def generate_summary_report(
-    report_type: str = "daily",
-    date_range: Optional[Union[Dict[str, str], str]] = None
+    report_type: str = "daily", date_range: Optional[Union[Dict[str, str], str]] = None
 ) -> str:
     """
     每日/每周摘要生成器 - 自动生成热点摘要报告
@@ -575,9 +569,8 @@ async def generate_summary_report(
         JSON格式的摘要报告，包含Markdown格式内容
     """
     tools = _get_tools()
-    result = tools['analytics'].generate_summary_report(
-        report_type=report_type,
-        date_range=date_range
+    result = tools["analytics"].generate_summary_report(
+        report_type=report_type, date_range=date_range
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -588,7 +581,7 @@ async def aggregate_news(
     platforms: Optional[List[str]] = None,
     similarity_threshold: float = 0.7,
     limit: int = 50,
-    include_url: bool = False
+    include_url: bool = False,
 ) -> str:
     """
     跨平台新闻聚合 - 对相似新闻进行去重合并
@@ -635,12 +628,12 @@ async def aggregate_news(
     - 可优先展示 platform_count > 1 的新闻
     """
     tools = _get_tools()
-    result = tools['analytics'].aggregate_news(
+    result = tools["analytics"].aggregate_news(
         date_range=date_range,
         platforms=platforms,
         similarity_threshold=similarity_threshold,
         limit=limit,
-        include_url=include_url
+        include_url=include_url,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -652,7 +645,7 @@ async def compare_periods(
     topic: Optional[str] = None,
     compare_type: str = "overview",
     platforms: Optional[List[str]] = None,
-    top_n: int = 10
+    top_n: int = 10,
 ) -> str:
     """
     时期对比分析 - 比较两个时间段的新闻数据
@@ -693,18 +686,19 @@ async def compare_periods(
           )
     """
     tools = _get_tools()
-    result = tools['analytics'].compare_periods(
+    result = tools["analytics"].compare_periods(
         period1=period1,
         period2=period2,
         topic=topic,
         compare_type=compare_type,
         platforms=platforms,
-        top_n=top_n
+        top_n=top_n,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 # ==================== 智能检索工具 ====================
+
 
 @mcp.tool
 async def search_news(
@@ -717,7 +711,7 @@ async def search_news(
     threshold: float = 0.6,
     include_url: bool = False,
     include_rss: bool = False,
-    rss_limit: int = 20
+    rss_limit: int = 20,
 ) -> str:
     """
     统一搜索接口，支持多种搜索模式，可同时搜索热榜和RSS
@@ -785,7 +779,7 @@ async def search_news(
     - 当include_rss=True时，热榜和RSS结果分开展示，RSS在热榜之后
     """
     tools = _get_tools()
-    result = tools['search'].search_news_unified(
+    result = tools["search"].search_news_unified(
         query=query,
         search_mode=search_mode,
         date_range=date_range,
@@ -795,17 +789,16 @@ async def search_news(
         threshold=threshold,
         include_url=include_url,
         include_rss=include_rss,
-        rss_limit=rss_limit
+        rss_limit=rss_limit,
     )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 # ==================== 配置与系统管理工具 ====================
 
+
 @mcp.tool
-async def get_current_config(
-    section: str = "all"
-) -> str:
+async def get_current_config(section: str = "all") -> str:
     """
     获取当前系统配置
 
@@ -821,7 +814,7 @@ async def get_current_config(
         JSON格式的配置信息
     """
     tools = _get_tools()
-    result = tools['config'].get_current_config(section=section)
+    result = tools["config"].get_current_config(section=section)
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -836,7 +829,7 @@ async def get_system_status() -> str:
         JSON格式的系统状态信息
     """
     tools = _get_tools()
-    result = tools['system'].get_system_status()
+    result = tools["system"].get_system_status()
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -844,7 +837,7 @@ async def get_system_status() -> str:
 async def trigger_crawl(
     platforms: Optional[List[str]] = None,
     save_to_local: bool = False,
-    include_url: bool = False
+    include_url: bool = False,
 ) -> str:
     """
     手动触发一次爬取任务（可选持久化）
@@ -871,16 +864,17 @@ async def trigger_crawl(
         - 使用默认平台: trigger_crawl()  # 爬取config.yaml中配置的所有平台
     """
     tools = _get_tools()
-    result = tools['system'].trigger_crawl(platforms=platforms, save_to_local=save_to_local, include_url=include_url)
+    result = tools["system"].trigger_crawl(
+        platforms=platforms, save_to_local=save_to_local, include_url=include_url
+    )
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 # ==================== 存储同步工具 ====================
 
+
 @mcp.tool
-async def sync_from_remote(
-    days: int = 7
-) -> str:
+async def sync_from_remote(days: int = 7) -> str:
     """
     从远程存储拉取数据到本地
 
@@ -914,7 +908,7 @@ async def sync_from_remote(
         - S3_SECRET_ACCESS_KEY: 访问密钥
     """
     tools = _get_tools()
-    result = tools['storage'].sync_from_remote(days=days)
+    result = tools["storage"].sync_from_remote(days=days)
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -948,14 +942,12 @@ async def get_storage_status() -> str:
         - get_storage_status()  # 查看所有存储状态
     """
     tools = _get_tools()
-    result = tools['storage'].get_storage_status()
+    result = tools["storage"].get_storage_status()
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 @mcp.tool
-async def list_available_dates(
-    source: str = "both"
-) -> str:
+async def list_available_dates(source: str = "both") -> str:
     """
     列出本地/远程可用的日期范围
 
@@ -992,17 +984,18 @@ async def list_available_dates(
         - list_available_dates(source="remote")  # 仅查看远程
     """
     tools = _get_tools()
-    result = tools['storage'].list_available_dates(source=source)
+    result = tools["storage"].list_available_dates(source=source)
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 # ==================== 启动入口 ====================
 
+
 def run_server(
     project_root: Optional[str] = None,
-    transport: str = 'stdio',
-    host: str = '0.0.0.0',
-    port: int = 3333
+    transport: str = "stdio",
+    host: str = "0.0.0.0",
+    port: int = 3333,
 ):
     """
     启动 MCP 服务器
@@ -1023,10 +1016,10 @@ def run_server(
     print("=" * 60)
     print(f"  传输模式: {transport.upper()}")
 
-    if transport == 'stdio':
+    if transport == "stdio":
         print("  协议: MCP over stdio (标准输入输出)")
         print("  说明: 通过标准输入输出与 MCP 客户端通信")
-    elif transport == 'http':
+    elif transport == "http":
         print(f"  协议: MCP over HTTP (生产环境)")
         print(f"  服务器监听: {host}:{port}")
 
@@ -1055,8 +1048,12 @@ def run_server(
     print("    8. find_related_news      - 相关新闻查找（支持历史数据）")
     print()
     print("    === 高级数据分析 ===")
-    print("    9. analyze_topic_trend      - 统一话题趋势分析（热度/生命周期/爆火/预测）")
-    print("    10. analyze_data_insights   - 统一数据洞察分析（平台对比/活跃度/关键词共现）")
+    print(
+        "    9. analyze_topic_trend      - 统一话题趋势分析（热度/生命周期/爆火/预测）"
+    )
+    print(
+        "    10. analyze_data_insights   - 统一数据洞察分析（平台对比/活跃度/关键词共现）"
+    )
     print("    11. analyze_sentiment       - 情感倾向分析")
     print("    12. aggregate_news          - 跨平台新闻聚合去重")
     print("    13. compare_periods         - 时期对比分析（周环比/月环比）")
@@ -1075,51 +1072,43 @@ def run_server(
     print()
 
     # 根据传输模式运行服务器
-    if transport == 'stdio':
-        mcp.run(transport='stdio')
-    elif transport == 'http':
+    if transport == "stdio":
+        mcp.run(transport="stdio")
+    elif transport == "http":
         # HTTP 模式（生产推荐）
         mcp.run(
-            transport='http',
+            transport="http",
             host=host,
             port=port,
-            path='/mcp'  # HTTP 端点路径
+            path="/mcp",  # HTTP 端点路径
         )
     else:
         raise ValueError(f"不支持的传输模式: {transport}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='TrendRadar MCP Server - 新闻热点聚合 MCP 工具服务器',
+        description="TrendRadar MCP Server - 新闻热点聚合 MCP 工具服务器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 详细配置教程请查看: README-Cherry-Studio.md
-        """
+        """,
     )
     parser.add_argument(
-        '--transport',
-        choices=['stdio', 'http'],
-        default='stdio',
-        help='传输模式：stdio (默认) 或 http (生产环境)'
+        "--transport",
+        choices=["stdio", "http"],
+        default="stdio",
+        help="传输模式：stdio (默认) 或 http (生产环境)",
     )
     parser.add_argument(
-        '--host',
-        default='0.0.0.0',
-        help='HTTP模式的监听地址，默认 0.0.0.0'
+        "--host", default="0.0.0.0", help="HTTP模式的监听地址，默认 0.0.0.0"
     )
     parser.add_argument(
-        '--port',
-        type=int,
-        default=3333,
-        help='HTTP模式的监听端口，默认 3333'
+        "--port", type=int, default=3333, help="HTTP模式的监听端口，默认 3333"
     )
-    parser.add_argument(
-        '--project-root',
-        help='项目根目录路径'
-    )
+    parser.add_argument("--project-root", help="项目根目录路径")
 
     args = parser.parse_args()
 
@@ -1127,5 +1116,5 @@ if __name__ == '__main__':
         project_root=args.project_root,
         transport=args.transport,
         host=args.host,
-        port=args.port
+        port=args.port,
     )

@@ -151,7 +151,11 @@ class DataFetcher:
                     for index, item in enumerate(data.get("items", []), 1):
                         title = item.get("title")
                         # 跳过无效标题（None、float、空字符串）
-                        if title is None or isinstance(title, float) or not str(title).strip():
+                        if (
+                            title is None
+                            or isinstance(title, float)
+                            or not str(title).strip()
+                        ):
                             continue
                         title = str(title).strip()
                         url = item.get("url", "")

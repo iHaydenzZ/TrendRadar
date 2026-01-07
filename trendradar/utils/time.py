@@ -127,7 +127,9 @@ def format_iso_time_friendly(
             try:
                 # 处理 T 分隔符
                 if "T" in iso_time:
-                    dt = datetime.fromisoformat(iso_time.replace("T", " ").split(".")[0])
+                    dt = datetime.fromisoformat(
+                        iso_time.replace("T", " ").split(".")[0]
+                    )
                 else:
                     dt = datetime.fromisoformat(iso_time.split(".")[0])
                 # 假设为 UTC 时间
@@ -212,7 +214,9 @@ def is_within_days(
         if dt is None:
             try:
                 if "T" in iso_time:
-                    dt = datetime.fromisoformat(iso_time.replace("T", " ").split(".")[0])
+                    dt = datetime.fromisoformat(
+                        iso_time.replace("T", " ").split(".")[0]
+                    )
                 else:
                     dt = datetime.fromisoformat(iso_time.split(".")[0])
                 dt = pytz.UTC.localize(dt)

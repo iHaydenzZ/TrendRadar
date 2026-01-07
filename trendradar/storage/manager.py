@@ -98,7 +98,9 @@ class StorageManager:
                 if self._has_remote_config():
                     return "remote"
                 else:
-                    print("[存储管理器] GitHub Actions 环境但未配置远程存储，使用本地存储")
+                    print(
+                        "[存储管理器] GitHub Actions 环境但未配置远程存储，使用本地存储"
+                    )
                     return "local"
             else:
                 return "local"
@@ -107,10 +109,18 @@ class StorageManager:
     def _has_remote_config(self) -> bool:
         """检查是否有有效的远程存储配置"""
         # 检查配置或环境变量
-        bucket_name = self.remote_config.get("bucket_name") or os.environ.get("S3_BUCKET_NAME")
-        access_key = self.remote_config.get("access_key_id") or os.environ.get("S3_ACCESS_KEY_ID")
-        secret_key = self.remote_config.get("secret_access_key") or os.environ.get("S3_SECRET_ACCESS_KEY")
-        endpoint = self.remote_config.get("endpoint_url") or os.environ.get("S3_ENDPOINT_URL")
+        bucket_name = self.remote_config.get("bucket_name") or os.environ.get(
+            "S3_BUCKET_NAME"
+        )
+        access_key = self.remote_config.get("access_key_id") or os.environ.get(
+            "S3_ACCESS_KEY_ID"
+        )
+        secret_key = self.remote_config.get("secret_access_key") or os.environ.get(
+            "S3_SECRET_ACCESS_KEY"
+        )
+        endpoint = self.remote_config.get("endpoint_url") or os.environ.get(
+            "S3_ENDPOINT_URL"
+        )
 
         # 调试日志
         has_config = bool(bucket_name and access_key and secret_key and endpoint)
@@ -129,11 +139,16 @@ class StorageManager:
             from trendradar.storage.remote import RemoteStorageBackend
 
             return RemoteStorageBackend(
-                bucket_name=self.remote_config.get("bucket_name") or os.environ.get("S3_BUCKET_NAME", ""),
-                access_key_id=self.remote_config.get("access_key_id") or os.environ.get("S3_ACCESS_KEY_ID", ""),
-                secret_access_key=self.remote_config.get("secret_access_key") or os.environ.get("S3_SECRET_ACCESS_KEY", ""),
-                endpoint_url=self.remote_config.get("endpoint_url") or os.environ.get("S3_ENDPOINT_URL", ""),
-                region=self.remote_config.get("region") or os.environ.get("S3_REGION", ""),
+                bucket_name=self.remote_config.get("bucket_name")
+                or os.environ.get("S3_BUCKET_NAME", ""),
+                access_key_id=self.remote_config.get("access_key_id")
+                or os.environ.get("S3_ACCESS_KEY_ID", ""),
+                secret_access_key=self.remote_config.get("secret_access_key")
+                or os.environ.get("S3_SECRET_ACCESS_KEY", ""),
+                endpoint_url=self.remote_config.get("endpoint_url")
+                or os.environ.get("S3_ENDPOINT_URL", ""),
+                region=self.remote_config.get("region")
+                or os.environ.get("S3_REGION", ""),
                 enable_txt=self.enable_txt,
                 enable_html=self.enable_html,
                 timezone=self.timezone,
@@ -233,7 +248,9 @@ class StorageManager:
         """保存 TXT 快照"""
         return self.get_backend().save_txt_snapshot(data)
 
-    def save_html_report(self, html_content: str, filename: str, is_summary: bool = False) -> Optional[str]:
+    def save_html_report(
+        self, html_content: str, filename: str, is_summary: bool = False
+    ) -> Optional[str]:
         """保存 HTML 报告"""
         return self.get_backend().save_html_report(html_content, filename, is_summary)
 
@@ -259,14 +276,18 @@ class StorageManager:
 
         # 清理本地数据
         if self.local_retention_days > 0:
-            total_deleted += self.get_backend().cleanup_old_data(self.local_retention_days)
+            total_deleted += self.get_backend().cleanup_old_data(
+                self.local_retention_days
+            )
 
         # 清理远程数据（如果配置了）
         if self.remote_retention_days > 0 and self._has_remote_config():
             if self._remote_backend is None:
                 self._remote_backend = self._create_remote_backend()
             if self._remote_backend:
-                total_deleted += self._remote_backend.cleanup_old_data(self.remote_retention_days)
+                total_deleted += self._remote_backend.cleanup_old_data(
+                    self.remote_retention_days
+                )
 
         return total_deleted
 

@@ -104,6 +104,8 @@ class PushRecordManager:
         result = normalized_start <= normalized_current <= normalized_end
 
         if not result:
-            print(f"时间窗口判断：当前 {normalized_current}，窗口 {normalized_start}-{normalized_end}")
+            print(
+                f"时间窗口判断：当前 {normalized_current}，窗口 {normalized_start}-{normalized_end}"
+            )
 
         return result

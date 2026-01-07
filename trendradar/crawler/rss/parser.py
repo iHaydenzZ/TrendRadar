@@ -15,6 +15,7 @@ from email.utils import parsedate_to_datetime
 
 try:
     import feedparser
+
     HAS_FEEDPARSER = True
 except ImportError:
     HAS_FEEDPARSER = False
@@ -24,6 +25,7 @@ except ImportError:
 @dataclass
 class ParsedRSSItem:
     """解析后的 RSS 条目"""
+
     title: str
     url: str
     published_at: Optional[str] = None
@@ -123,7 +125,9 @@ class RSSParser:
 
         return items
 
-    def _parse_json_feed_item(self, item_data: Dict[str, Any]) -> Optional[ParsedRSSItem]:
+    def _parse_json_feed_item(
+        self, item_data: Dict[str, Any]
+    ) -> Optional[ParsedRSSItem]:
         """解析单个 JSON Feed 条目"""
         # 标题：优先 title，否则使用 content_text 的前 100 字符
         title = item_data.get("title", "")
@@ -155,13 +159,17 @@ class RSSParser:
         if summary:
             summary = self._clean_text(summary)
             if len(summary) > self.max_summary_length:
-                summary = summary[:self.max_summary_length] + "..."
+                summary = summary[: self.max_summary_length] + "..."
 
         # 作者
         author = None
         authors = item_data.get("authors", [])
         if authors:
-            names = [a.get("name", "") for a in authors if isinstance(a, dict) and a.get("name")]
+            names = [
+                a.get("name", "")
+                for a in authors
+                if isinstance(a, dict) and a.get("name")
+            ]
             if names:
                 author = ", ".join(names)
 
@@ -206,9 +214,9 @@ class RSSParser:
         """
         import requests
 
-        response = requests.get(url, timeout=timeout, headers={
-            "User-Agent": "TrendRadar/2.0 RSS Reader"
-        })
+        response = requests.get(
+            url, timeout=timeout, headers={"User-Agent": "TrendRadar/2.0 RSS Reader"}
+        )
         response.raise_for_status()
 
         return self.parse(response.text, url)
@@ -224,7 +232,9 @@ class RSSParser:
             # 尝试从 links 中获取
             links = entry.get("links", [])
             for link in links:
-                if link.get("rel") == "alternate" or link.get("type", "").startswith("text/html"):
+                if link.get("rel") == "alternate" or link.get("type", "").startswith(
+                    "text/html"
+                ):
                     url = link.get("href", "")
                     break
             if not url and links:
@@ -253,10 +263,10 @@ class RSSParser:
         text = html.unescape(text)
 
         # 移除 HTML 标签
-        text = re.sub(r'<[^>]+>', '', text)
+        text = re.sub(r"<[^>]+>", "", text)
 
         # 移除多余空白
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
 
         return text.strip()
 
@@ -307,7 +317,7 @@ class RSSParser:
 
         # 截断过长的摘要
         if len(summary) > self.max_summary_length:
-            summary = summary[:self.max_summary_length] + "..."
+            summary = summary[: self.max_summary_length] + "..."
 
         return summary
 

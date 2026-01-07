@@ -38,15 +38,15 @@ def _parse_word(word: str) -> Dict:
 
     # 解析 => 显示名称 语法（支持 => 两边有或没有空格）
     # 使用正则匹配：空格可选的 =>
-    display_match = re.search(r'\s*=>\s*', word)
+    display_match = re.search(r"\s*=>\s*", word)
     if display_match:
-        parts = re.split(r'\s*=>\s*', word, 1)
+        parts = re.split(r"\s*=>\s*", word, 1)
         word = parts[0].strip()
         display_name = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
 
     # 解析正则表达式：支持 /pattern/ 或 /pattern/flags（如 /pattern/i）
     # flags 会被忽略，因为默认已启用 IGNORECASE
-    regex_match = re.match(r'^/(.+)/([gimsux]*)$', word)
+    regex_match = re.match(r"^/(.+)/([gimsux]*)$", word)
     if regex_match:
         pattern_str = regex_match.group(1)
         # flags 参数被忽略，统一使用 IGNORECASE
@@ -62,7 +62,12 @@ def _parse_word(word: str) -> Dict:
             # 正则表达式无效，当作普通词处理
             pass
 
-    return {"word": word, "is_regex": False, "pattern": None, "display_name": display_name}
+    return {
+        "word": word,
+        "is_regex": False,
+        "pattern": None,
+        "display_name": display_name,
+    }
 
 
 def _word_matches(word_config: Union[str, Dict], title_lower: str) -> bool:
@@ -220,7 +225,7 @@ def matches_word_groups(
     title: str,
     word_groups: List[Dict],
     filter_words: List,
-    global_filters: Optional[List[str]] = None
+    global_filters: Optional[List[str]] = None,
 ) -> bool:
     """
     检查标题是否匹配词组规则

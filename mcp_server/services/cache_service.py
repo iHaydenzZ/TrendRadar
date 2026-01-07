@@ -88,7 +88,8 @@ class CacheService:
         with self._lock:
             current_time = time.time()
             expired_keys = [
-                key for key, timestamp in self._timestamps.items()
+                key
+                for key, timestamp in self._timestamps.items()
                 if current_time - timestamp >= ttl
             ]
 
@@ -110,12 +111,14 @@ class CacheService:
                 "total_entries": len(self._cache),
                 "oldest_entry_age": (
                     time.time() - min(self._timestamps.values())
-                    if self._timestamps else 0
+                    if self._timestamps
+                    else 0
                 ),
                 "newest_entry_age": (
                     time.time() - max(self._timestamps.values())
-                    if self._timestamps else 0
-                )
+                    if self._timestamps
+                    else 0
+                ),
             }
 
 

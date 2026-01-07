@@ -11,7 +11,10 @@ from trendradar.report.helpers import clean_title, html_escape, format_rank_disp
 
 
 def format_title_for_platform(
-    platform: str, title_data: Dict, show_source: bool = True, show_keyword: bool = False
+    platform: str,
+    title_data: Dict,
+    show_source: bool = True,
+    show_keyword: bool = False,
 ) -> str:
     """统一的标题格式化方法
 
@@ -65,7 +68,9 @@ def format_title_for_platform(
         if show_source:
             result = f"<font color='grey'>[{title_data['source_name']}]</font> {title_prefix}{formatted_title}"
         elif show_keyword and keyword:
-            result = f"<font color='blue'>[{keyword}]</font> {title_prefix}{formatted_title}"
+            result = (
+                f"<font color='blue'>[{keyword}]</font> {title_prefix}{formatted_title}"
+            )
         else:
             result = f"{title_prefix}{formatted_title}"
 

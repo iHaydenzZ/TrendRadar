@@ -17,7 +17,7 @@ from ..utils.validators import (
     validate_keyword,
     validate_top_n,
     validate_date_range,
-    validate_threshold
+    validate_threshold,
 )
 from ..utils.errors import MCPError, InvalidParameterError, DataNotFoundError
 
@@ -92,7 +92,7 @@ class AnalyticsTools:
         topic: Optional[str] = None,
         date_range: Optional[Union[Dict[str, str], str]] = None,
         min_frequency: int = 3,
-        top_n: int = 20
+        top_n: int = 20,
     ) -> Dict:
         """
         统一数据洞察分析工具 - 整合多种数据分析模式
@@ -117,40 +117,32 @@ class AnalyticsTools:
         """
         try:
             # 参数验证
-            if insight_type not in ["platform_compare", "platform_activity", "keyword_cooccur"]:
+            if insight_type not in [
+                "platform_compare",
+                "platform_activity",
+                "keyword_cooccur",
+            ]:
                 raise InvalidParameterError(
                     f"无效的洞察类型: {insight_type}",
-                    suggestion="支持的类型: platform_compare, platform_activity, keyword_cooccur"
+                    suggestion="支持的类型: platform_compare, platform_activity, keyword_cooccur",
                 )
 
             # 根据洞察类型调用相应方法
             if insight_type == "platform_compare":
-                return self.compare_platforms(
-                    topic=topic,
-                    date_range=date_range
-                )
+                return self.compare_platforms(topic=topic, date_range=date_range)
             elif insight_type == "platform_activity":
-                return self.get_platform_activity_stats(
-                    date_range=date_range
-                )
+                return self.get_platform_activity_stats(date_range=date_range)
             else:  # keyword_cooccur
                 return self.analyze_keyword_cooccurrence(
-                    min_frequency=min_frequency,
-                    top_n=top_n
+                    min_frequency=min_frequency, top_n=top_n
                 )
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def analyze_topic_trend_unified(
@@ -162,7 +154,7 @@ class AnalyticsTools:
         threshold: float = 3.0,
         time_window: int = 24,
         lookahead_hours: int = 6,
-        confidence_threshold: float = 0.7
+        confidence_threshold: float = 0.7,
     ) -> Dict:
         """
         统一话题趋势分析工具 - 整合多种趋势分析模式
@@ -199,53 +191,41 @@ class AnalyticsTools:
             if analysis_type not in ["trend", "lifecycle", "viral", "predict"]:
                 raise InvalidParameterError(
                     f"无效的分析类型: {analysis_type}",
-                    suggestion="支持的类型: trend, lifecycle, viral, predict"
+                    suggestion="支持的类型: trend, lifecycle, viral, predict",
                 )
 
             # 根据分析类型调用相应方法
             if analysis_type == "trend":
                 return self.get_topic_trend_analysis(
-                    topic=topic,
-                    date_range=date_range,
-                    granularity=granularity
+                    topic=topic, date_range=date_range, granularity=granularity
                 )
             elif analysis_type == "lifecycle":
-                return self.analyze_topic_lifecycle(
-                    topic=topic,
-                    date_range=date_range
-                )
+                return self.analyze_topic_lifecycle(topic=topic, date_range=date_range)
             elif analysis_type == "viral":
                 # viral模式不需要topic参数，使用通用检测
                 return self.detect_viral_topics(
-                    threshold=threshold,
-                    time_window=time_window
+                    threshold=threshold, time_window=time_window
                 )
             else:  # predict
                 # predict模式不需要topic参数，使用通用预测
                 return self.predict_trending_topics(
                     lookahead_hours=lookahead_hours,
-                    confidence_threshold=confidence_threshold
+                    confidence_threshold=confidence_threshold,
                 )
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def get_topic_trend_analysis(
         self,
         topic: str,
         date_range: Optional[Union[Dict[str, str], str]] = None,
-        granularity: str = "day"
+        granularity: str = "day",
     ) -> Dict:
         """
         热度趋势分析 - 追踪特定话题的热度变化趋势
@@ -291,14 +271,16 @@ class AnalyticsTools:
             # 验证粒度参数（只支持day）
             if granularity != "day":
                 from ..utils.errors import InvalidParameterError
+
                 raise InvalidParameterError(
                     f"不支持的粒度参数: {granularity}",
-                    suggestion="当前仅支持 'day' 粒度，因为底层数据按天聚合"
+                    suggestion="当前仅支持 'day' 粒度，因为底层数据按天聚合",
                 )
 
             # 处理日期范围（不指定时默认最近7天）
             if date_range:
                 from ..utils.validators import validate_date_range
+
                 date_range_tuple = validate_date_range(date_range)
                 start_date, end_date = date_range_tuple
             else:
@@ -312,8 +294,10 @@ class AnalyticsTools:
 
             while current_date <= end_date:
                 try:
-                    all_titles, _, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date
+                    all_titles, _, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date
+                        )
                     )
 
                     # 统计该时间点的话题出现次数
@@ -326,18 +310,22 @@ class AnalyticsTools:
                                 count += 1
                                 matched_titles.append(title)
 
-                    trend_data.append({
-                        "date": current_date.strftime("%Y-%m-%d"),
-                        "count": count,
-                        "sample_titles": matched_titles[:3]  # 只保留前3个样本
-                    })
+                    trend_data.append(
+                        {
+                            "date": current_date.strftime("%Y-%m-%d"),
+                            "count": count,
+                            "sample_titles": matched_titles[:3],  # 只保留前3个样本
+                        }
+                    )
 
                 except DataNotFoundError:
-                    trend_data.append({
-                        "date": current_date.strftime("%Y-%m-%d"),
-                        "count": 0,
-                        "sample_titles": []
-                    })
+                    trend_data.append(
+                        {
+                            "date": current_date.strftime("%Y-%m-%d"),
+                            "count": 0,
+                            "sample_titles": [],
+                        }
+                    )
 
                 # 按天增加时间
                 current_date += timedelta(days=1)
@@ -371,38 +359,38 @@ class AnalyticsTools:
                 "date_range": {
                     "start": start_date.strftime("%Y-%m-%d"),
                     "end": end_date.strftime("%Y-%m-%d"),
-                    "total_days": total_days
+                    "total_days": total_days,
                 },
                 "granularity": granularity,
                 "trend_data": trend_data,
                 "statistics": {
                     "total_mentions": sum(counts),
-                    "average_mentions": round(sum(counts) / len(counts), 2) if counts else 0,
+                    "average_mentions": round(sum(counts) / len(counts), 2)
+                    if counts
+                    else 0,
                     "peak_count": max_count,
                     "peak_time": peak_time,
-                    "change_rate": round(change_rate, 2)
+                    "change_rate": round(change_rate, 2),
                 },
-                "trend_direction": "上升" if change_rate > 10 else "下降" if change_rate < -10 else "稳定"
+                "trend_direction": "上升"
+                if change_rate > 10
+                else "下降"
+                if change_rate < -10
+                else "稳定",
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def compare_platforms(
         self,
         topic: Optional[str] = None,
-        date_range: Optional[Union[Dict[str, str], str]] = None
+        date_range: Optional[Union[Dict[str, str], str]] = None,
     ) -> Dict:
         """
         平台对比分析 - 对比不同平台对同一话题的关注度
@@ -441,19 +429,23 @@ class AnalyticsTools:
                 start_date = end_date = datetime.now()
 
             # 收集各平台数据
-            platform_stats = defaultdict(lambda: {
-                "total_news": 0,
-                "topic_mentions": 0,
-                "unique_titles": set(),
-                "top_keywords": Counter()
-            })
+            platform_stats = defaultdict(
+                lambda: {
+                    "total_news": 0,
+                    "topic_mentions": 0,
+                    "unique_titles": set(),
+                    "top_keywords": Counter(),
+                }
+            )
 
             # 遍历日期范围
             current_date = start_date
             while current_date <= end_date:
                 try:
-                    all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date
+                    all_titles, id_to_name, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date
+                        )
                     )
 
                     for platform_id, titles in all_titles.items():
@@ -469,7 +461,9 @@ class AnalyticsTools:
 
                             # 提取关键词（简单分词）
                             keywords = self._extract_keywords(title)
-                            platform_stats[platform_name]["top_keywords"].update(keywords)
+                            platform_stats[platform_name]["top_keywords"].update(
+                                keywords
+                            )
 
                 except DataNotFoundError:
                     pass
@@ -481,7 +475,9 @@ class AnalyticsTools:
             for platform, stats in platform_stats.items():
                 coverage_rate = 0
                 if stats["total_news"] > 0:
-                    coverage_rate = (stats["topic_mentions"] / stats["total_news"]) * 100
+                    coverage_rate = (
+                        stats["topic_mentions"] / stats["total_news"]
+                    ) * 100
 
                 result_stats[platform] = {
                     "total_news": stats["total_news"],
@@ -491,7 +487,7 @@ class AnalyticsTools:
                     "top_keywords": [
                         {"keyword": k, "count": v}
                         for k, v in stats["top_keywords"].most_common(5)
-                    ]
+                    ],
                 }
 
             # 找出各平台独有的热点
@@ -502,31 +498,23 @@ class AnalyticsTools:
                 "topic": topic,
                 "date_range": {
                     "start": start_date.strftime("%Y-%m-%d"),
-                    "end": end_date.strftime("%Y-%m-%d")
+                    "end": end_date.strftime("%Y-%m-%d"),
                 },
                 "platform_stats": result_stats,
                 "unique_topics": unique_topics,
-                "total_platforms": len(result_stats)
+                "total_platforms": len(result_stats),
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def analyze_keyword_cooccurrence(
-        self,
-        min_frequency: int = 3,
-        top_n: int = 20
+        self, min_frequency: int = 3, top_n: int = 20
     ) -> Dict:
         """
         关键词共现分析 - 分析哪些关键词经常同时出现
@@ -576,14 +564,15 @@ class AnalyticsTools:
                     # 计算两两共现
                     if len(keywords) >= 2:
                         for i, kw1 in enumerate(keywords):
-                            for kw2 in keywords[i+1:]:
+                            for kw2 in keywords[i + 1 :]:
                                 # 统一排序，避免重复
                                 pair = tuple(sorted([kw1, kw2]))
                                 cooccurrence[pair] += 1
 
             # 过滤低频共现
             filtered_pairs = [
-                (pair, count) for pair, count in cooccurrence.items()
+                (pair, count)
+                for pair, count in cooccurrence.items()
                 if count >= min_frequency
             ]
 
@@ -595,37 +584,34 @@ class AnalyticsTools:
             for (kw1, kw2), count in top_pairs:
                 # 找出同时包含两个关键词的标题样本
                 titles_with_both = [
-                    title for title in keyword_titles[kw1]
+                    title
+                    for title in keyword_titles[kw1]
                     if kw2 in self._extract_keywords(title)
                 ]
 
-                result_pairs.append({
-                    "keyword1": kw1,
-                    "keyword2": kw2,
-                    "cooccurrence_count": count,
-                    "sample_titles": titles_with_both[:3]
-                })
+                result_pairs.append(
+                    {
+                        "keyword1": kw1,
+                        "keyword2": kw2,
+                        "cooccurrence_count": count,
+                        "sample_titles": titles_with_both[:3],
+                    }
+                )
 
             return {
                 "success": True,
                 "cooccurrence_pairs": result_pairs,
                 "total_pairs": len(result_pairs),
                 "min_frequency": min_frequency,
-                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def analyze_sentiment(
@@ -635,7 +621,7 @@ class AnalyticsTools:
         date_range: Optional[Union[Dict[str, str], str]] = None,
         limit: int = 50,
         sort_by_weight: bool = True,
-        include_url: bool = False
+        include_url: bool = False,
     ) -> Dict:
         """
         情感倾向分析 - 生成用于 AI 情感分析的结构化提示词
@@ -697,9 +683,10 @@ class AnalyticsTools:
 
             while current_date <= end_date:
                 try:
-                    all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date,
-                        platform_ids=platforms
+                    all_titles, id_to_name, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date, platform_ids=platforms
+                        )
                     )
 
                     # 收集该日期的新闻
@@ -715,7 +702,7 @@ class AnalyticsTools:
                                 "title": title,
                                 "ranks": info.get("ranks", []),
                                 "count": len(info.get("ranks", [])),
-                                "date": current_date.strftime("%Y-%m-%d")
+                                "date": current_date.strftime("%Y-%m-%d"),
                             }
 
                             # 条件性添加 URL 字段
@@ -733,10 +720,14 @@ class AnalyticsTools:
                 current_date += timedelta(days=1)
 
             if not all_news_items:
-                time_desc = "今天" if start_date == end_date else f"{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}"
+                time_desc = (
+                    "今天"
+                    if start_date == end_date
+                    else f"{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}"
+                )
                 raise DataNotFoundError(
                     f"未找到相关新闻（{time_desc}）",
-                    suggestion="请尝试其他话题、日期范围或平台"
+                    suggestion="请尝试其他话题、日期范围或平台",
                 )
 
             # 去重（同一标题只保留一次）
@@ -756,8 +747,7 @@ class AnalyticsTools:
             # 按权重排序（如果启用）
             if sort_by_weight:
                 deduplicated_news.sort(
-                    key=lambda x: calculate_news_weight(x),
-                    reverse=True
+                    key=lambda x: calculate_news_weight(x), reverse=True
                 )
 
             # 限制返回数量
@@ -765,8 +755,7 @@ class AnalyticsTools:
 
             # 生成 AI 提示词
             ai_prompt = self._create_sentiment_analysis_prompt(
-                news_data=selected_news,
-                topic=topic
+                news_data=selected_news, topic=topic
             )
 
             # 构建时间范围描述
@@ -786,39 +775,35 @@ class AnalyticsTools:
                     "topic": topic,
                     "time_range": time_range_desc,
                     "platforms": list(set(item["platform"] for item in selected_news)),
-                    "sorted_by_weight": sort_by_weight
+                    "sorted_by_weight": sort_by_weight,
                 },
                 "ai_prompt": ai_prompt,
                 "news_sample": selected_news,
-                "usage_note": "请将 ai_prompt 字段的内容发送给 AI 进行情感分析"
+                "usage_note": "请将 ai_prompt 字段的内容发送给 AI 进行情感分析",
             }
 
             # 如果返回数量少于请求数量，增加提示
             if len(selected_news) < limit and len(deduplicated_news) >= limit:
-                result["note"] = "返回数量少于请求数量是因为去重逻辑（同一标题在不同平台只保留一次）"
+                result["note"] = (
+                    "返回数量少于请求数量是因为去重逻辑（同一标题在不同平台只保留一次）"
+                )
             elif len(deduplicated_news) < limit:
-                result["note"] = f"在指定时间范围内仅找到 {len(deduplicated_news)} 条匹配的新闻"
+                result["note"] = (
+                    f"在指定时间范围内仅找到 {len(deduplicated_news)} 条匹配的新闻"
+                )
 
             return result
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def _create_sentiment_analysis_prompt(
-        self,
-        news_data: List[Dict],
-        topic: Optional[str]
+        self, news_data: List[Dict], topic: Optional[str]
     ) -> str:
         """
         创建情感分析的 AI 提示词
@@ -833,10 +818,9 @@ class AnalyticsTools:
         # 按平台分组
         platform_news = defaultdict(list)
         for item in news_data:
-            platform_news[item["platform"]].append({
-                "title": item["title"],
-                "date": item.get("date", "")
-            })
+            platform_news[item["platform"]].append(
+                {"title": item["title"], "date": item.get("date", "")}
+            )
 
         # 构建提示词
         prompt_parts = []
@@ -912,7 +896,7 @@ class AnalyticsTools:
         reference_title: str,
         threshold: float = 0.6,
         limit: int = 50,
-        include_url: bool = False
+        include_url: bool = False,
     ) -> Dict:
         """
         相似新闻查找 - 基于标题相似度查找相关新闻
@@ -944,11 +928,15 @@ class AnalyticsTools:
         try:
             # 参数验证
             reference_title = validate_keyword(reference_title)
-            threshold = validate_threshold(threshold, default=0.6, min_value=0.0, max_value=1.0)
+            threshold = validate_threshold(
+                threshold, default=0.6, min_value=0.0, max_value=1.0
+            )
             limit = validate_limit(limit, default=50)
 
             # 读取数据
-            all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date()
+            all_titles, id_to_name, _ = (
+                self.data_service.parser.read_all_titles_for_date()
+            )
 
             # 计算相似度
             similar_items = []
@@ -969,7 +957,7 @@ class AnalyticsTools:
                             "platform": platform_id,
                             "platform_name": platform_name,
                             "similarity": round(similarity, 3),
-                            "rank": info["ranks"][0] if info["ranks"] else 0
+                            "rank": info["ranks"][0] if info["ranks"] else 0,
                         }
 
                         # 条件性添加 URL 字段
@@ -987,7 +975,7 @@ class AnalyticsTools:
             if not result_items:
                 raise DataNotFoundError(
                     f"未找到相似度超过 {threshold} 的新闻",
-                    suggestion="请降低相似度阈值或尝试其他标题"
+                    suggestion="请降低相似度阈值或尝试其他标题",
                 )
 
             result = {
@@ -997,28 +985,24 @@ class AnalyticsTools:
                     "returned_count": len(result_items),
                     "requested_limit": limit,
                     "threshold": threshold,
-                    "reference_title": reference_title
+                    "reference_title": reference_title,
                 },
-                "similar_news": result_items
+                "similar_news": result_items,
             }
 
             if len(similar_items) < limit:
-                result["note"] = f"相似度阈值 {threshold} 下仅找到 {len(similar_items)} 条相似新闻"
+                result["note"] = (
+                    f"相似度阈值 {threshold} 下仅找到 {len(similar_items)} 条相似新闻"
+                )
 
             return result
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def search_by_entity(
@@ -1026,7 +1010,7 @@ class AnalyticsTools:
         entity: str,
         entity_type: Optional[str] = None,
         limit: int = 50,
-        sort_by_weight: bool = True
+        sort_by_weight: bool = True,
     ) -> Dict:
         """
         实体识别搜索 - 搜索包含特定人物/地点/机构的新闻
@@ -1060,14 +1044,20 @@ class AnalyticsTools:
             entity = validate_keyword(entity)
             limit = validate_limit(limit, default=50)
 
-            if entity_type and entity_type not in ["person", "location", "organization"]:
+            if entity_type and entity_type not in [
+                "person",
+                "location",
+                "organization",
+            ]:
                 raise InvalidParameterError(
                     f"无效的实体类型: {entity_type}",
-                    suggestion="支持的类型: person, location, organization"
+                    suggestion="支持的类型: person, location, organization",
                 )
 
             # 读取数据
-            all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date()
+            all_titles, id_to_name, _ = (
+                self.data_service.parser.read_all_titles_for_date()
+            )
 
             # 搜索包含实体的新闻
             related_news = []
@@ -1083,16 +1073,18 @@ class AnalyticsTools:
                         ranks = info.get("ranks", [])
                         count = len(ranks)
 
-                        related_news.append({
-                            "title": title,
-                            "platform": platform_id,
-                            "platform_name": platform_name,
-                            "url": url,
-                            "mobileUrl": mobile_url,
-                            "ranks": ranks,
-                            "count": count,
-                            "rank": ranks[0] if ranks else 999
-                        })
+                        related_news.append(
+                            {
+                                "title": title,
+                                "platform": platform_id,
+                                "platform_name": platform_name,
+                                "url": url,
+                                "mobileUrl": mobile_url,
+                                "ranks": ranks,
+                                "count": count,
+                                "rank": ranks[0] if ranks else 999,
+                            }
+                        )
 
                         # 提取实体周边的关键词
                         keywords = self._extract_keywords(title)
@@ -1100,8 +1092,7 @@ class AnalyticsTools:
 
             if not related_news:
                 raise DataNotFoundError(
-                    f"未找到包含实体 '{entity}' 的新闻",
-                    suggestion="请尝试其他实体名称"
+                    f"未找到包含实体 '{entity}' 的新闻", suggestion="请尝试其他实体名称"
                 )
 
             # 移除实体本身
@@ -1110,10 +1101,7 @@ class AnalyticsTools:
 
             # 按权重排序（如果启用）
             if sort_by_weight:
-                related_news.sort(
-                    key=lambda x: calculate_news_weight(x),
-                    reverse=True
-                )
+                related_news.sort(key=lambda x: calculate_news_weight(x), reverse=True)
             else:
                 # 按排名排序
                 related_news.sort(key=lambda x: x["rank"])
@@ -1132,27 +1120,21 @@ class AnalyticsTools:
                 "related_keywords": [
                     {"keyword": k, "count": v}
                     for k, v in entity_context.most_common(10)
-                ]
+                ],
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def generate_summary_report(
         self,
         report_type: str = "daily",
-        date_range: Optional[Union[Dict[str, str], str]] = None
+        date_range: Optional[Union[Dict[str, str], str]] = None,
     ) -> Dict:
         """
         每日/每周摘要生成器 - 自动生成热点摘要报告
@@ -1182,7 +1164,7 @@ class AnalyticsTools:
             if report_type not in ["daily", "weekly"]:
                 raise InvalidParameterError(
                     f"无效的报告类型: {report_type}",
-                    suggestion="支持的类型: daily, weekly"
+                    suggestion="支持的类型: daily, weekly",
                 )
 
             # 确定日期范围
@@ -1204,8 +1186,10 @@ class AnalyticsTools:
             current_date = start_date
             while current_date <= end_date:
                 try:
-                    all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date
+                    all_titles, id_to_name, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date
+                        )
                     )
 
                     for platform_id, titles in all_titles.items():
@@ -1213,11 +1197,13 @@ class AnalyticsTools:
                         all_platforms_news[platform_name] += len(titles)
 
                         for title in titles.keys():
-                            all_titles_list.append({
-                                "title": title,
-                                "platform": platform_name,
-                                "date": current_date.strftime("%Y-%m-%d")
-                            })
+                            all_titles_list.append(
+                                {
+                                    "title": title,
+                                    "platform": platform_name,
+                                    "date": current_date.strftime("%Y-%m-%d"),
+                                }
+                            )
 
                             # 提取关键词
                             keywords = self._extract_keywords(title)
@@ -1230,13 +1216,17 @@ class AnalyticsTools:
 
             # 生成报告
             report_title = f"{'每日' if report_type == 'daily' else '每周'}新闻热点摘要"
-            date_str = f"{start_date.strftime('%Y-%m-%d')}" if report_type == "daily" else f"{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}"
+            date_str = (
+                f"{start_date.strftime('%Y-%m-%d')}"
+                if report_type == "daily"
+                else f"{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}"
+            )
 
             # 构建Markdown报告
             markdown = f"""# {report_title}
 
 **报告日期**: {date_str}
-**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ---
 
@@ -1256,7 +1246,9 @@ class AnalyticsTools:
 
             # 平台分析
             markdown += "\n## 📱 平台活跃度\n\n"
-            sorted_platforms = sorted(all_platforms_news.items(), key=lambda x: x[1], reverse=True)
+            sorted_platforms = sorted(
+                all_platforms_news.items(), key=lambda x: x[1], reverse=True
+            )
 
             for platform, count in sorted_platforms:
                 markdown += f"- **{platform}**: {count} 条新闻\n"
@@ -1282,14 +1274,14 @@ class AnalyticsTools:
                 for news in all_titles_list:
                     # 简单权重：统计包含TOP关键词的次数
                     score = 0
-                    title_lower = news['title'].lower()
+                    title_lower = news["title"].lower()
                     for keyword, count in all_keywords.most_common(10):
                         if keyword.lower() in title_lower:
                             score += count
                     news_with_scores.append((news, score))
 
                 # 按权重降序排序，权重相同则按标题字母顺序（确保确定性）
-                news_with_scores.sort(key=lambda x: (-x[1], x[0]['title']))
+                news_with_scores.sort(key=lambda x: (-x[1], x[0]["title"]))
 
                 # 取前5条
                 sample_news = [item[0] for item in news_with_scores[:5]]
@@ -1304,34 +1296,29 @@ class AnalyticsTools:
                 "report_type": report_type,
                 "date_range": {
                     "start": start_date.strftime("%Y-%m-%d"),
-                    "end": end_date.strftime("%Y-%m-%d")
+                    "end": end_date.strftime("%Y-%m-%d"),
                 },
                 "markdown_report": markdown,
                 "statistics": {
                     "total_news": len(all_titles_list),
                     "platforms_count": len(all_platforms_news),
                     "keywords_count": len(all_keywords),
-                    "top_keyword": all_keywords.most_common(1)[0] if all_keywords else None
-                }
+                    "top_keyword": all_keywords.most_common(1)[0]
+                    if all_keywords
+                    else None,
+                },
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def get_platform_activity_stats(
-        self,
-        date_range: Optional[Union[Dict[str, str], str]] = None
+        self, date_range: Optional[Union[Dict[str, str], str]] = None
     ) -> Dict:
         """
         平台活跃度统计 - 统计各平台的发布频率和活跃时间段
@@ -1366,37 +1353,47 @@ class AnalyticsTools:
                 start_date = end_date = datetime.now()
 
             # 统计各平台活跃度
-            platform_activity = defaultdict(lambda: {
-                "total_updates": 0,
-                "days_active": set(),
-                "news_count": 0,
-                "hourly_distribution": Counter()
-            })
+            platform_activity = defaultdict(
+                lambda: {
+                    "total_updates": 0,
+                    "days_active": set(),
+                    "news_count": 0,
+                    "hourly_distribution": Counter(),
+                }
+            )
 
             # 遍历日期范围
             current_date = start_date
             while current_date <= end_date:
                 try:
-                    all_titles, id_to_name, timestamps = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date
+                    all_titles, id_to_name, timestamps = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date
+                        )
                     )
 
                     for platform_id, titles in all_titles.items():
                         platform_name = id_to_name.get(platform_id, platform_id)
 
                         platform_activity[platform_name]["news_count"] += len(titles)
-                        platform_activity[platform_name]["days_active"].add(current_date.strftime("%Y-%m-%d"))
+                        platform_activity[platform_name]["days_active"].add(
+                            current_date.strftime("%Y-%m-%d")
+                        )
 
                         # 统计更新次数（基于文件数量）
-                        platform_activity[platform_name]["total_updates"] += len(timestamps)
+                        platform_activity[platform_name]["total_updates"] += len(
+                            timestamps
+                        )
 
                         # 统计时间分布（基于文件名中的时间）
                         for filename in timestamps.keys():
                             # 解析文件名中的小时（格式：HHMM.txt）
-                            match = re.match(r'(\d{2})(\d{2})\.txt', filename)
+                            match = re.match(r"(\d{2})(\d{2})\.txt", filename)
                             if match:
                                 hour = int(match.group(1))
-                                platform_activity[platform_name]["hourly_distribution"][hour] += 1
+                                platform_activity[platform_name]["hourly_distribution"][
+                                    hour
+                                ] += 1
 
                 except DataNotFoundError:
                     pass
@@ -1407,7 +1404,9 @@ class AnalyticsTools:
             result_activity = {}
             for platform, stats in platform_activity.items():
                 days_count = len(stats["days_active"])
-                avg_news_per_day = stats["news_count"] / days_count if days_count > 0 else 0
+                avg_news_per_day = (
+                    stats["news_count"] / days_count if days_count > 0 else 0
+                )
 
                 # 找出最活跃的时间段
                 most_active_hours = stats["hourly_distribution"].most_common(3)
@@ -1421,45 +1420,41 @@ class AnalyticsTools:
                         {"hour": f"{hour:02d}:00", "count": count}
                         for hour, count in most_active_hours
                     ],
-                    "activity_score": round(stats["news_count"] / max(days_count, 1), 2)
+                    "activity_score": round(
+                        stats["news_count"] / max(days_count, 1), 2
+                    ),
                 }
 
             # 按活跃度排序
             sorted_platforms = sorted(
                 result_activity.items(),
                 key=lambda x: x[1]["activity_score"],
-                reverse=True
+                reverse=True,
             )
 
             return {
                 "success": True,
                 "date_range": {
                     "start": start_date.strftime("%Y-%m-%d"),
-                    "end": end_date.strftime("%Y-%m-%d")
+                    "end": end_date.strftime("%Y-%m-%d"),
                 },
                 "platform_activity": dict(sorted_platforms),
-                "most_active_platform": sorted_platforms[0][0] if sorted_platforms else None,
-                "total_platforms": len(result_activity)
+                "most_active_platform": sorted_platforms[0][0]
+                if sorted_platforms
+                else None,
+                "total_platforms": len(result_activity),
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def analyze_topic_lifecycle(
-        self,
-        topic: str,
-        date_range: Optional[Union[Dict[str, str], str]] = None
+        self, topic: str, date_range: Optional[Union[Dict[str, str], str]] = None
     ) -> Dict:
         """
         话题生命周期分析 - 追踪话题从出现到消失的完整周期
@@ -1494,6 +1489,7 @@ class AnalyticsTools:
             # 处理日期范围（不指定时默认最近7天）
             if date_range:
                 from ..utils.validators import validate_date_range
+
                 date_range_tuple = validate_date_range(date_range)
                 start_date, end_date = date_range_tuple
             else:
@@ -1506,8 +1502,10 @@ class AnalyticsTools:
             current_date = start_date
             while current_date <= end_date:
                 try:
-                    all_titles, _, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date
+                    all_titles, _, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date
+                        )
                     )
 
                     # 统计该日的话题出现次数
@@ -1517,16 +1515,14 @@ class AnalyticsTools:
                             if topic.lower() in title.lower():
                                 count += 1
 
-                    lifecycle_data.append({
-                        "date": current_date.strftime("%Y-%m-%d"),
-                        "count": count
-                    })
+                    lifecycle_data.append(
+                        {"date": current_date.strftime("%Y-%m-%d"), "count": count}
+                    )
 
                 except DataNotFoundError:
-                    lifecycle_data.append({
-                        "date": current_date.strftime("%Y-%m-%d"),
-                        "count": 0
-                    })
+                    lifecycle_data.append(
+                        {"date": current_date.strftime("%Y-%m-%d"), "count": 0}
+                    )
 
                 current_date += timedelta(days=1)
 
@@ -1540,12 +1536,21 @@ class AnalyticsTools:
                 time_desc = f"{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}"
                 raise DataNotFoundError(
                     f"在 {time_desc} 内未找到话题 '{topic}'",
-                    suggestion="请尝试其他话题或扩大时间范围"
+                    suggestion="请尝试其他话题或扩大时间范围",
                 )
 
             # 找到首次出现和最后出现
-            first_appearance = next((item["date"] for item in lifecycle_data if item["count"] > 0), None)
-            last_appearance = next((item["date"] for item in reversed(lifecycle_data) if item["count"] > 0), None)
+            first_appearance = next(
+                (item["date"] for item in lifecycle_data if item["count"] > 0), None
+            )
+            last_appearance = next(
+                (
+                    item["date"]
+                    for item in reversed(lifecycle_data)
+                    if item["count"] > 0
+                ),
+                None,
+            )
 
             # 计算峰值
             max_count = max(counts)
@@ -1554,11 +1559,13 @@ class AnalyticsTools:
 
             # 计算平均值和标准差（简单实现）
             non_zero_counts = [c for c in counts if c > 0]
-            avg_count = sum(non_zero_counts) / len(non_zero_counts) if non_zero_counts else 0
+            avg_count = (
+                sum(non_zero_counts) / len(non_zero_counts) if non_zero_counts else 0
+            )
 
             # 判断生命周期阶段
             recent_counts = counts[-3:]  # 最近3天
-            early_counts = counts[:3]    # 前3天
+            early_counts = counts[:3]  # 前3天
 
             if sum(recent_counts) > sum(early_counts):
                 lifecycle_stage = "上升期"
@@ -1585,7 +1592,7 @@ class AnalyticsTools:
                 "date_range": {
                     "start": start_date.strftime("%Y-%m-%d"),
                     "end": end_date.strftime("%Y-%m-%d"),
-                    "total_days": total_days
+                    "total_days": total_days,
                 },
                 "lifecycle_data": lifecycle_data,
                 "analysis": {
@@ -1596,28 +1603,20 @@ class AnalyticsTools:
                     "active_days": active_days,
                     "avg_daily_mentions": round(avg_count, 2),
                     "lifecycle_stage": lifecycle_stage,
-                    "topic_type": topic_type
-                }
+                    "topic_type": topic_type,
+                },
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def detect_viral_topics(
-        self,
-        threshold: float = 3.0,
-        time_window: int = 24
+        self, threshold: float = 3.0, time_window: int = 24
     ) -> Dict:
         """
         异常热度检测 - 自动识别突然爆火的话题
@@ -1645,17 +1644,21 @@ class AnalyticsTools:
         """
         try:
             # 参数验证
-            threshold = validate_threshold(threshold, default=3.0, min_value=1.0, max_value=100.0)
+            threshold = validate_threshold(
+                threshold, default=3.0, min_value=1.0, max_value=100.0
+            )
             time_window = validate_limit(time_window, default=24, max_limit=72)
 
             # 读取当前和之前的数据
-            current_all_titles, _, _ = self.data_service.parser.read_all_titles_for_date()
+            current_all_titles, _, _ = (
+                self.data_service.parser.read_all_titles_for_date()
+            )
 
             # 读取昨天的数据作为基准
             yesterday = datetime.now() - timedelta(days=1)
             try:
-                previous_all_titles, _, _ = self.data_service.parser.read_all_titles_for_date(
-                    date=yesterday
+                previous_all_titles, _, _ = (
+                    self.data_service.parser.read_all_titles_for_date(date=yesterday)
                 )
             except DataNotFoundError:
                 previous_all_titles = {}
@@ -1690,7 +1693,7 @@ class AnalyticsTools:
                 if previous_count == 0:
                     # 新出现的话题
                     if current_count >= 5:  # 至少出现5次才认为是爆火
-                        growth_rate = float('inf')
+                        growth_rate = float("inf")
                         is_viral = True
                     else:
                         continue
@@ -1699,19 +1702,27 @@ class AnalyticsTools:
                     is_viral = growth_rate >= threshold
 
                 if is_viral:
-                    viral_topics.append({
-                        "keyword": keyword,
-                        "current_count": current_count,
-                        "previous_count": previous_count,
-                        "growth_rate": round(growth_rate, 2) if growth_rate != float('inf') else "新话题",
-                        "sample_titles": current_keyword_titles[keyword][:3],
-                        "alert_level": "高" if growth_rate > threshold * 2 else "中"
-                    })
+                    viral_topics.append(
+                        {
+                            "keyword": keyword,
+                            "current_count": current_count,
+                            "previous_count": previous_count,
+                            "growth_rate": round(growth_rate, 2)
+                            if growth_rate != float("inf")
+                            else "新话题",
+                            "sample_titles": current_keyword_titles[keyword][:3],
+                            "alert_level": "高"
+                            if growth_rate > threshold * 2
+                            else "中",
+                        }
+                    )
 
             # 按增长率排序
             viral_topics.sort(
-                key=lambda x: x["current_count"] if x["growth_rate"] == "新话题" else x["growth_rate"],
-                reverse=True
+                key=lambda x: x["current_count"]
+                if x["growth_rate"] == "新话题"
+                else x["growth_rate"],
+                reverse=True,
             )
 
             if not viral_topics:
@@ -1719,7 +1730,7 @@ class AnalyticsTools:
                     "success": True,
                     "viral_topics": [],
                     "total_detected": 0,
-                    "message": f"未检测到热度增长超过 {threshold} 倍的话题"
+                    "message": f"未检测到热度增长超过 {threshold} 倍的话题",
                 }
 
             return {
@@ -1728,27 +1739,19 @@ class AnalyticsTools:
                 "total_detected": len(viral_topics),
                 "threshold": threshold,
                 "time_window": time_window,
-                "detection_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "detection_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     def predict_trending_topics(
-        self,
-        lookahead_hours: int = 6,
-        confidence_threshold: float = 0.7
+        self, lookahead_hours: int = 6, confidence_threshold: float = 0.7
     ) -> Dict:
         """
         话题预测 - 基于历史数据预测未来可能的热点
@@ -1782,7 +1785,7 @@ class AnalyticsTools:
                 default=0.7,
                 min_value=0.0,
                 max_value=1.0,
-                param_name="confidence_threshold"
+                param_name="confidence_threshold",
             )
 
             # 收集最近3天的数据用于预测
@@ -1792,8 +1795,8 @@ class AnalyticsTools:
                 date = datetime.now() - timedelta(days=days_ago)
 
                 try:
-                    all_titles, _, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=date
+                    all_titles, _, _ = (
+                        self.data_service.parser.read_all_titles_for_date(date=date)
                     )
 
                     # 统计关键词
@@ -1830,8 +1833,7 @@ class AnalyticsTools:
 
             except DataNotFoundError:
                 raise DataNotFoundError(
-                    "未找到今天的数据",
-                    suggestion="请等待爬虫任务完成"
+                    "未找到今天的数据", suggestion="请等待爬虫任务完成"
                 )
 
             # 预测潜力话题
@@ -1860,28 +1862,29 @@ class AnalyticsTools:
                     if len(trend_data) >= 3:
                         # 检查是否连续增长
                         is_consistent = all(
-                            trend_data[i] <= trend_data[i+1]
-                            for i in range(len(trend_data)-1)
+                            trend_data[i] <= trend_data[i + 1]
+                            for i in range(len(trend_data) - 1)
                         )
                         confidence = 0.9 if is_consistent else 0.7
                     else:
                         confidence = 0.6
 
                     if confidence >= confidence_threshold:
-                        predicted_topics.append({
-                            "keyword": keyword,
-                            "current_count": recent_value,
-                            "growth_rate": round(growth_rate * 100, 2),
-                            "confidence": round(confidence, 2),
-                            "trend_data": trend_data,
-                            "prediction": "上升趋势，可能成为热点",
-                            "sample_titles": keyword_titles.get(keyword, [])[:3]
-                        })
+                        predicted_topics.append(
+                            {
+                                "keyword": keyword,
+                                "current_count": recent_value,
+                                "growth_rate": round(growth_rate * 100, 2),
+                                "confidence": round(confidence, 2),
+                                "trend_data": trend_data,
+                                "prediction": "上升趋势，可能成为热点",
+                                "sample_titles": keyword_titles.get(keyword, [])[:3],
+                            }
+                        )
 
             # 按置信度和增长率排序
             predicted_topics.sort(
-                key=lambda x: (x["confidence"], x["growth_rate"]),
-                reverse=True
+                key=lambda x: (x["confidence"], x["growth_rate"]), reverse=True
             )
 
             return {
@@ -1891,21 +1894,15 @@ class AnalyticsTools:
                 "lookahead_hours": lookahead_hours,
                 "confidence_threshold": confidence_threshold,
                 "prediction_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "note": "预测基于历史趋势，实际结果可能有偏差"
+                "note": "预测基于历史趋势，实际结果可能有偏差",
             }
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
     # ==================== 辅助方法 ====================
@@ -1922,18 +1919,50 @@ class AnalyticsTools:
             关键词列表
         """
         # 移除URL和特殊字符
-        title = re.sub(r'http[s]?://\S+', '', title)
-        title = re.sub(r'[^\w\s]', ' ', title)
+        title = re.sub(r"http[s]?://\S+", "", title)
+        title = re.sub(r"[^\w\s]", " ", title)
 
         # 简单分词（按空格和常见分隔符）
-        words = re.split(r'[\s，。！？、]+', title)
+        words = re.split(r"[\s，。！？、]+", title)
 
         # 过滤停用词和短词
-        stopwords = {'的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这'}
+        stopwords = {
+            "的",
+            "了",
+            "在",
+            "是",
+            "我",
+            "有",
+            "和",
+            "就",
+            "不",
+            "人",
+            "都",
+            "一",
+            "一个",
+            "上",
+            "也",
+            "很",
+            "到",
+            "说",
+            "要",
+            "去",
+            "你",
+            "会",
+            "着",
+            "没有",
+            "看",
+            "好",
+            "自己",
+            "这",
+        }
 
         keywords = [
-            word.strip() for word in words
-            if word.strip() and len(word.strip()) >= min_length and word.strip() not in stopwords
+            word.strip()
+            for word in words
+            if word.strip()
+            and len(word.strip()) >= min_length
+            and word.strip() not in stopwords
         ]
 
         return keywords
@@ -1993,7 +2022,7 @@ class AnalyticsTools:
         platforms: Optional[List[str]] = None,
         similarity_threshold: float = 0.7,
         limit: int = 50,
-        include_url: bool = False
+        include_url: bool = False,
     ) -> Dict:
         """
         跨平台新闻聚合 - 对相似新闻进行去重合并
@@ -2036,9 +2065,10 @@ class AnalyticsTools:
 
             while current_date <= end_date:
                 try:
-                    all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date(
-                        date=current_date,
-                        platform_ids=platforms
+                    all_titles, id_to_name, _ = (
+                        self.data_service.parser.read_all_titles_for_date(
+                            date=current_date, platform_ids=platforms
+                        )
                     )
 
                     for platform_id, titles in all_titles.items():
@@ -2052,7 +2082,7 @@ class AnalyticsTools:
                                 "date": current_date.strftime("%Y-%m-%d"),
                                 "ranks": info.get("ranks", []),
                                 "count": len(info.get("ranks", [])),
-                                "rank": info["ranks"][0] if info["ranks"] else 999
+                                "rank": info["ranks"][0] if info["ranks"] else 999,
                             }
 
                             if include_url:
@@ -2073,7 +2103,7 @@ class AnalyticsTools:
                     "success": True,
                     "aggregated_news": [],
                     "total": 0,
-                    "message": "未找到新闻数据"
+                    "message": "未找到新闻数据",
                 }
 
             # 执行聚合
@@ -2090,7 +2120,9 @@ class AnalyticsTools:
             # 统计信息
             total_original = len(all_news)
             total_aggregated = len(aggregated)
-            dedup_rate = 1 - (total_aggregated / total_original) if total_original > 0 else 0
+            dedup_rate = (
+                1 - (total_aggregated / total_original) if total_original > 0 else 0
+            )
 
             platform_coverage = Counter()
             for item in aggregated:
@@ -2107,27 +2139,31 @@ class AnalyticsTools:
                     "similarity_threshold": similarity_threshold,
                     "date_range": {
                         "start": start_date.strftime("%Y-%m-%d"),
-                        "end": end_date.strftime("%Y-%m-%d")
-                    }
+                        "end": end_date.strftime("%Y-%m-%d"),
+                    },
                 },
                 "aggregated_news": results,
                 "statistics": {
                     "platform_coverage": dict(platform_coverage),
-                    "multi_platform_news": len([a for a in aggregated if len(a["platforms"]) > 1]),
-                    "single_platform_news": len([a for a in aggregated if len(a["platforms"]) == 1])
-                }
+                    "multi_platform_news": len(
+                        [a for a in aggregated if len(a["platforms"]) > 1]
+                    ),
+                    "single_platform_news": len(
+                        [a for a in aggregated if len(a["platforms"]) == 1]
+                    ),
+                },
             }
 
         except MCPError as e:
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            return {"success": False, "error": {"code": "INTERNAL_ERROR", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
+            }
 
     def _aggregate_similar_news(
-        self,
-        news_list: List[Dict],
-        threshold: float,
-        include_url: bool
+        self, news_list: List[Dict], threshold: float, include_url: bool
     ) -> List[Dict]:
         """
         对新闻列表进行相似度聚合
@@ -2162,19 +2198,23 @@ class AnalyticsTools:
                 "best_rank": news["rank"],
                 "total_count": news["count"],
                 "aggregate_weight": news.get("weight", 0),
-                "sources": [{
-                    "platform": news["platform_name"],
-                    "rank": news["rank"],
-                    "date": news["date"]
-                }]
+                "sources": [
+                    {
+                        "platform": news["platform_name"],
+                        "rank": news["rank"],
+                        "date": news["date"],
+                    }
+                ],
             }
 
             if include_url and news.get("url"):
-                group["urls"] = [{
-                    "platform": news["platform_name"],
-                    "url": news.get("url", ""),
-                    "mobileUrl": news.get("mobileUrl", "")
-                }]
+                group["urls"] = [
+                    {
+                        "platform": news["platform_name"],
+                        "url": news.get("url", ""),
+                        "mobileUrl": news.get("mobileUrl", ""),
+                    }
+                ]
 
             used_indices.add(i)
 
@@ -2183,7 +2223,9 @@ class AnalyticsTools:
                 if j in used_indices:
                     continue
 
-                similarity = self._calculate_similarity(news["title"], other_news["title"])
+                similarity = self._calculate_similarity(
+                    news["title"], other_news["title"]
+                )
 
                 if similarity >= threshold:
                     # 合并到当前组
@@ -2196,22 +2238,28 @@ class AnalyticsTools:
 
                     group["best_rank"] = min(group["best_rank"], other_news["rank"])
                     group["total_count"] += other_news["count"]
-                    group["aggregate_weight"] += other_news.get("weight", 0) * 0.5  # 额外权重
+                    group["aggregate_weight"] += (
+                        other_news.get("weight", 0) * 0.5
+                    )  # 额外权重
 
-                    group["sources"].append({
-                        "platform": other_news["platform_name"],
-                        "rank": other_news["rank"],
-                        "date": other_news["date"]
-                    })
+                    group["sources"].append(
+                        {
+                            "platform": other_news["platform_name"],
+                            "rank": other_news["rank"],
+                            "date": other_news["date"],
+                        }
+                    )
 
                     if include_url and other_news.get("url"):
                         if "urls" not in group:
                             group["urls"] = []
-                        group["urls"].append({
-                            "platform": other_news["platform_name"],
-                            "url": other_news.get("url", ""),
-                            "mobileUrl": other_news.get("mobileUrl", "")
-                        })
+                        group["urls"].append(
+                            {
+                                "platform": other_news["platform_name"],
+                                "url": other_news.get("url", ""),
+                                "mobileUrl": other_news.get("mobileUrl", ""),
+                            }
+                        )
 
                     used_indices.add(j)
 
@@ -2232,7 +2280,7 @@ class AnalyticsTools:
         topic: Optional[str] = None,
         compare_type: str = "overview",
         platforms: Optional[List[str]] = None,
-        top_n: int = 10
+        top_n: int = 10,
     ) -> Dict:
         """
         时期对比分析 - 比较两个时间段的新闻数据
@@ -2263,7 +2311,7 @@ class AnalyticsTools:
             if compare_type not in ["overview", "topic_shift", "platform_activity"]:
                 raise InvalidParameterError(
                     f"不支持的对比类型: {compare_type}",
-                    suggestion="支持的类型: overview, topic_shift, platform_activity"
+                    suggestion="支持的类型: overview, topic_shift, platform_activity",
                 )
 
             # 解析时间段
@@ -2273,7 +2321,7 @@ class AnalyticsTools:
             if not date_range1 or not date_range2:
                 raise InvalidParameterError(
                     "无效的时间段格式",
-                    suggestion="使用 {'start': 'YYYY-MM-DD', 'end': 'YYYY-MM-DD'} 或预设值如 'last_week'"
+                    suggestion="使用 {'start': 'YYYY-MM-DD', 'end': 'YYYY-MM-DD'} 或预设值如 'last_week'",
                 )
 
             # 收集两个时期的数据
@@ -2282,23 +2330,29 @@ class AnalyticsTools:
 
             # 根据对比类型执行不同的分析
             if compare_type == "overview":
-                result = self._compare_overview(data1, data2, date_range1, date_range2, top_n)
+                result = self._compare_overview(
+                    data1, data2, date_range1, date_range2, top_n
+                )
             elif compare_type == "topic_shift":
-                result = self._compare_topic_shift(data1, data2, date_range1, date_range2, top_n)
+                result = self._compare_topic_shift(
+                    data1, data2, date_range1, date_range2, top_n
+                )
             else:  # platform_activity
-                result = self._compare_platform_activity(data1, data2, date_range1, date_range2)
+                result = self._compare_platform_activity(
+                    data1, data2, date_range1, date_range2
+                )
 
             result["success"] = True
             result["compare_type"] = compare_type
             result["periods"] = {
                 "period1": {
                     "start": date_range1[0].strftime("%Y-%m-%d"),
-                    "end": date_range1[1].strftime("%Y-%m-%d")
+                    "end": date_range1[1].strftime("%Y-%m-%d"),
                 },
                 "period2": {
                     "start": date_range2[0].strftime("%Y-%m-%d"),
-                    "end": date_range2[1].strftime("%Y-%m-%d")
-                }
+                    "end": date_range2[1].strftime("%Y-%m-%d"),
+                },
             }
 
             if topic:
@@ -2309,7 +2363,10 @@ class AnalyticsTools:
         except MCPError as e:
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            return {"success": False, "error": {"code": "INTERNAL_ERROR", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
+            }
 
     def _parse_period(self, period: Union[Dict[str, str], str]) -> Optional[tuple]:
         """解析时间段为日期范围元组"""
@@ -2345,10 +2402,7 @@ class AnalyticsTools:
         return None
 
     def _collect_period_data(
-        self,
-        date_range: tuple,
-        platforms: Optional[List[str]],
-        topic: Optional[str]
+        self, date_range: tuple, platforms: Optional[List[str]], topic: Optional[str]
     ) -> Dict:
         """收集指定时期的新闻数据"""
         start_date, end_date = date_range
@@ -2359,9 +2413,10 @@ class AnalyticsTools:
         current_date = start_date
         while current_date <= end_date:
             try:
-                all_titles, id_to_name, _ = self.data_service.parser.read_all_titles_for_date(
-                    date=current_date,
-                    platform_ids=platforms
+                all_titles, id_to_name, _ = (
+                    self.data_service.parser.read_all_titles_for_date(
+                        date=current_date, platform_ids=platforms
+                    )
                 )
 
                 for platform_id, titles in all_titles.items():
@@ -2378,7 +2433,7 @@ class AnalyticsTools:
                             "platform_name": platform_name,
                             "date": current_date.strftime("%Y-%m-%d"),
                             "ranks": info.get("ranks", []),
-                            "rank": info["ranks"][0] if info["ranks"] else 999
+                            "rank": info["ranks"][0] if info["ranks"] else 999,
                         }
                         news_item["weight"] = calculate_news_weight(news_item)
                         all_news.append(news_item)
@@ -2400,21 +2455,18 @@ class AnalyticsTools:
             "news_count": len(all_news),
             "keywords": all_keywords,
             "platform_stats": platform_stats,
-            "date_range": date_range
+            "date_range": date_range,
         }
 
     def _compare_overview(
-        self,
-        data1: Dict,
-        data2: Dict,
-        range1: tuple,
-        range2: tuple,
-        top_n: int
+        self, data1: Dict, data2: Dict, range1: tuple, range2: tuple, top_n: int
     ) -> Dict:
         """总体概览对比"""
         # 计算变化
         count_change = data2["news_count"] - data1["news_count"]
-        count_change_pct = (count_change / data1["news_count"] * 100) if data1["news_count"] > 0 else 0
+        count_change_pct = (
+            (count_change / data1["news_count"] * 100) if data1["news_count"] > 0 else 0
+        )
 
         # TOP 关键词对比
         top_kw1 = [kw for kw, _ in data1["keywords"].most_common(top_n)]
@@ -2425,34 +2477,39 @@ class AnalyticsTools:
         persistent_keywords = [kw for kw in top_kw1 if kw in top_kw2]
 
         # TOP 新闻对比
-        top_news1 = sorted(data1["news"], key=lambda x: x.get("weight", 0), reverse=True)[:top_n]
-        top_news2 = sorted(data2["news"], key=lambda x: x.get("weight", 0), reverse=True)[:top_n]
+        top_news1 = sorted(
+            data1["news"], key=lambda x: x.get("weight", 0), reverse=True
+        )[:top_n]
+        top_news2 = sorted(
+            data2["news"], key=lambda x: x.get("weight", 0), reverse=True
+        )[:top_n]
 
         return {
             "overview": {
                 "period1_count": data1["news_count"],
                 "period2_count": data2["news_count"],
                 "count_change": count_change,
-                "count_change_percent": f"{count_change_pct:+.1f}%"
+                "count_change_percent": f"{count_change_pct:+.1f}%",
             },
             "keyword_analysis": {
                 "new_keywords": new_keywords[:5],
                 "disappeared_keywords": disappeared_keywords[:5],
-                "persistent_keywords": persistent_keywords[:5]
+                "persistent_keywords": persistent_keywords[:5],
             },
             "top_news": {
-                "period1": [{"title": n["title"], "platform": n["platform_name"]} for n in top_news1],
-                "period2": [{"title": n["title"], "platform": n["platform_name"]} for n in top_news2]
-            }
+                "period1": [
+                    {"title": n["title"], "platform": n["platform_name"]}
+                    for n in top_news1
+                ],
+                "period2": [
+                    {"title": n["title"], "platform": n["platform_name"]}
+                    for n in top_news2
+                ],
+            },
         }
 
     def _compare_topic_shift(
-        self,
-        data1: Dict,
-        data2: Dict,
-        range1: tuple,
-        range2: tuple,
-        top_n: int
+        self, data1: Dict, data2: Dict, range1: tuple, range2: tuple, top_n: int
     ) -> Dict:
         """话题变化分析"""
         kw1 = data1["keywords"]
@@ -2474,37 +2531,40 @@ class AnalyticsTools:
             else:
                 change_pct = 0
 
-            keyword_changes.append({
-                "keyword": kw,
-                "period1_count": count1,
-                "period2_count": count2,
-                "change": change,
-                "change_percent": round(change_pct, 1)
-            })
+            keyword_changes.append(
+                {
+                    "keyword": kw,
+                    "period1_count": count1,
+                    "period2_count": count2,
+                    "change": change,
+                    "change_percent": round(change_pct, 1),
+                }
+            )
 
         # 按变化幅度排序
-        rising = sorted([k for k in keyword_changes if k["change"] > 0],
-                       key=lambda x: x["change"], reverse=True)[:top_n]
-        falling = sorted([k for k in keyword_changes if k["change"] < 0],
-                        key=lambda x: x["change"])[:top_n]
-        new_topics = [k for k in keyword_changes if k["period1_count"] == 0 and k["period2_count"] > 0][:top_n]
+        rising = sorted(
+            [k for k in keyword_changes if k["change"] > 0],
+            key=lambda x: x["change"],
+            reverse=True,
+        )[:top_n]
+        falling = sorted(
+            [k for k in keyword_changes if k["change"] < 0], key=lambda x: x["change"]
+        )[:top_n]
+        new_topics = [
+            k
+            for k in keyword_changes
+            if k["period1_count"] == 0 and k["period2_count"] > 0
+        ][:top_n]
 
         return {
             "rising_topics": rising,
             "falling_topics": falling,
             "new_topics": new_topics,
-            "total_keywords": {
-                "period1": len(kw1),
-                "period2": len(kw2)
-            }
+            "total_keywords": {"period1": len(kw1), "period2": len(kw2)},
         }
 
     def _compare_platform_activity(
-        self,
-        data1: Dict,
-        data2: Dict,
-        range1: tuple,
-        range2: tuple
+        self, data1: Dict, data2: Dict, range1: tuple, range2: tuple
     ) -> Dict:
         """平台活跃度对比"""
         ps1 = data1["platform_stats"]
@@ -2525,13 +2585,15 @@ class AnalyticsTools:
             else:
                 change_pct = 0
 
-            platform_changes.append({
-                "platform": platform,
-                "period1_count": count1,
-                "period2_count": count2,
-                "change": change,
-                "change_percent": round(change_pct, 1)
-            })
+            platform_changes.append(
+                {
+                    "platform": platform,
+                    "period1_count": count1,
+                    "period2_count": count2,
+                    "change": change,
+                    "change_percent": round(change_pct, 1),
+                }
+            )
 
         # 按变化排序
         platform_changes.sort(key=lambda x: x["change"], reverse=True)
@@ -2542,6 +2604,6 @@ class AnalyticsTools:
             "least_active_growth": platform_changes[-1] if platform_changes else None,
             "total_activity": {
                 "period1": sum(ps1.values()),
-                "period2": sum(ps2.values())
-            }
+                "period2": sum(ps2.values()),
+            },
         }

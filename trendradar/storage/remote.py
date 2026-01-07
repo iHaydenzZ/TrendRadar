@@ -21,6 +21,7 @@ try:
     import boto3
     from botocore.config import Config as BotoConfig
     from botocore.exceptions import ClientError
+
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -87,7 +88,9 @@ class RemoteStorageBackend(StorageBackend):
         self.timezone = timezone
 
         # 创建临时目录
-        self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.mkdtemp(prefix="trendradar_"))
+        self.temp_dir = (
+            Path(temp_dir) if temp_dir else Path(tempfile.mkdtemp(prefix="trendradar_"))
+        )
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
         # 初始化 S3 客户端
@@ -96,7 +99,7 @@ class RemoteStorageBackend(StorageBackend):
         # - 腾讯云 COS 使用 SigV2 以避免 chunked encoding 问题
         # - 其他服务商（AWS S3、Cloudflare R2、阿里云 OSS、MinIO 等）默认使用 SigV4
         is_tencent_cos = "myqcloud.com" in endpoint_url.lower()
-        signature_version = 's3' if is_tencent_cos else 's3v4'
+        signature_version = "s3" if is_tencent_cos else "s3v4"
 
         s3_config = BotoConfig(
             s3={"addressing_style": "virtual"},
@@ -118,7 +121,9 @@ class RemoteStorageBackend(StorageBackend):
         self._downloaded_files: List[Path] = []
         self._db_connections: Dict[str, sqlite3.Connection] = {}
 
-        print(f"[远程存储] 初始化完成，存储桶: {bucket_name}，签名版本: {signature_version}")
+        print(
+            f"[远程存储] 初始化完成，存储桶: {bucket_name}，签名版本: {signature_version}"
+        )
 
     @property
     def backend_name(self) -> str:
@@ -140,7 +145,9 @@ class RemoteStorageBackend(StorageBackend):
         """格式化时间文件名 (格式: HH-MM)"""
         return format_time_filename(self.timezone)
 
-    def _get_remote_db_key(self, date: Optional[str] = None, db_type: str = "news") -> str:
+    def _get_remote_db_key(
+        self, date: Optional[str] = None, db_type: str = "news"
+    ) -> str:
         """
         获取远程存储中 SQLite 文件的对象键
 
@@ -154,7 +161,9 @@ class RemoteStorageBackend(StorageBackend):
         date_folder = self._format_date_folder(date)
         return f"{db_type}/{date_folder}.db"
 
-    def _get_local_db_path(self, date: Optional[str] = None, db_type: str = "news") -> Path:
+    def _get_local_db_path(
+        self, date: Optional[str] = None, db_type: str = "news"
+    ) -> Path:
         """
         获取本地临时 SQLite 文件路径
 
@@ -195,7 +204,9 @@ class RemoteStorageBackend(StorageBackend):
             print(f"[远程存储] 检查对象存在性异常 ({r2_key}): {e}")
             return False
 
-    def _download_sqlite(self, date: Optional[str] = None, db_type: str = "news") -> Optional[Path]:
+    def _download_sqlite(
+        self, date: Optional[str] = None, db_type: str = "news"
+    ) -> Optional[Path]:
         """
         从远程存储下载当天的 SQLite 文件到本地临时目录
 
@@ -224,8 +235,8 @@ class RemoteStorageBackend(StorageBackend):
             # 使用 get_object + iter_chunks 替代 download_file
             # iter_chunks 会自动处理 chunked transfer encoding
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=r2_key)
-            with open(local_path, 'wb') as f:
-                for chunk in response['Body'].iter_chunks(chunk_size=1024*1024):
+            with open(local_path, "wb") as f:
+                for chunk in response["Body"].iter_chunks(chunk_size=1024 * 1024):
                     f.write(chunk)
             self._downloaded_files.append(local_path)
             print(f"[远程存储] 已下载: {r2_key} -> {local_path}")
@@ -269,7 +280,7 @@ class RemoteStorageBackend(StorageBackend):
             # 读取文件内容为 bytes 后上传
             # 避免传入文件对象时 requests 库使用 chunked transfer encoding
             # 腾讯云 COS 等 S3 兼容服务可能无法正确处理 chunked encoding
-            with open(local_path, 'rb') as f:
+            with open(local_path, "rb") as f:
                 file_content = f.read()
 
             # 使用 put_object 并明确设置 ContentLength，确保不使用 chunked encoding
@@ -278,7 +289,7 @@ class RemoteStorageBackend(StorageBackend):
                 Key=r2_key,
                 Body=file_content,
                 ContentLength=local_size,
-                ContentType='application/x-sqlite3',
+                ContentType="application/x-sqlite3",
             )
             print(f"[远程存储] 已上传: {local_path} -> {r2_key}")
 
@@ -294,7 +305,9 @@ class RemoteStorageBackend(StorageBackend):
             print(f"[远程存储] 上传失败: {e}")
             return False
 
-    def _get_connection(self, date: Optional[str] = None, db_type: str = "news") -> sqlite3.Connection:
+    def _get_connection(
+        self, date: Optional[str] = None, db_type: str = "news"
+    ) -> sqlite3.Connection:
         """
         获取数据库连接
 
@@ -384,13 +397,16 @@ class RemoteStorageBackend(StorageBackend):
 
             # 首先同步平台信息到 platforms 表
             for source_id, source_name in data.id_to_name.items():
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO platforms (id, name, updated_at)
                     VALUES (?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         name = excluded.name,
                         updated_at = excluded.updated_at
-                """, (source_id, source_name, now_str))
+                """,
+                    (source_id, source_name, now_str),
+                )
 
             # 统计计数器
             new_count = 0
@@ -404,14 +420,19 @@ class RemoteStorageBackend(StorageBackend):
                 for item in news_list:
                     try:
                         # 标准化 URL（去除动态参数，如微博的 band_rank）
-                        normalized_url = normalize_url(item.url, source_id) if item.url else ""
+                        normalized_url = (
+                            normalize_url(item.url, source_id) if item.url else ""
+                        )
 
                         # 检查是否已存在（通过标准化 URL + platform_id）
                         if normalized_url:
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 SELECT id, title FROM news_items
                                 WHERE url = ? AND platform_id = ?
-                            """, (normalized_url, source_id))
+                            """,
+                                (normalized_url, source_id),
+                            )
                             existing = cursor.fetchone()
 
                             if existing:
@@ -421,22 +442,34 @@ class RemoteStorageBackend(StorageBackend):
                                 # 检查标题是否变化
                                 if existing_title != item.title:
                                     # 记录标题变更
-                                    cursor.execute("""
+                                    cursor.execute(
+                                        """
                                         INSERT INTO title_changes
                                         (news_item_id, old_title, new_title, changed_at)
                                         VALUES (?, ?, ?, ?)
-                                    """, (existing_id, existing_title, item.title, now_str))
+                                    """,
+                                        (
+                                            existing_id,
+                                            existing_title,
+                                            item.title,
+                                            now_str,
+                                        ),
+                                    )
                                     title_changed_count += 1
 
                                 # 记录排名历史
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rank_history
                                     (news_item_id, rank, crawl_time, created_at)
                                     VALUES (?, ?, ?, ?)
-                                """, (existing_id, item.rank, data.crawl_time, now_str))
+                                """,
+                                    (existing_id, item.rank, data.crawl_time, now_str),
+                                )
 
                                 # 更新现有记录
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     UPDATE news_items SET
                                         title = ?,
                                         rank = ?,
@@ -445,89 +478,142 @@ class RemoteStorageBackend(StorageBackend):
                                         crawl_count = crawl_count + 1,
                                         updated_at = ?
                                     WHERE id = ?
-                                """, (item.title, item.rank, item.mobile_url,
-                                      data.crawl_time, now_str, existing_id))
+                                """,
+                                    (
+                                        item.title,
+                                        item.rank,
+                                        item.mobile_url,
+                                        data.crawl_time,
+                                        now_str,
+                                        existing_id,
+                                    ),
+                                )
                                 updated_count += 1
                             else:
                                 # 不存在，插入新记录（存储标准化后的 URL）
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO news_items
                                     (title, platform_id, rank, url, mobile_url,
                                      first_crawl_time, last_crawl_time, crawl_count,
                                      created_at, updated_at)
                                     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                                """, (item.title, source_id, item.rank, normalized_url,
-                                      item.mobile_url, data.crawl_time, data.crawl_time,
-                                      now_str, now_str))
+                                """,
+                                    (
+                                        item.title,
+                                        source_id,
+                                        item.rank,
+                                        normalized_url,
+                                        item.mobile_url,
+                                        data.crawl_time,
+                                        data.crawl_time,
+                                        now_str,
+                                        now_str,
+                                    ),
+                                )
                                 new_id = cursor.lastrowid
                                 # 记录初始排名
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rank_history
                                     (news_item_id, rank, crawl_time, created_at)
                                     VALUES (?, ?, ?, ?)
-                                """, (new_id, item.rank, data.crawl_time, now_str))
+                                """,
+                                    (new_id, item.rank, data.crawl_time, now_str),
+                                )
                                 new_count += 1
                         else:
                             # URL 为空的情况，直接插入（不做去重）
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO news_items
                                 (title, platform_id, rank, url, mobile_url,
                                  first_crawl_time, last_crawl_time, crawl_count,
                                  created_at, updated_at)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (item.title, source_id, item.rank, "",
-                                  item.mobile_url, data.crawl_time, data.crawl_time,
-                                  now_str, now_str))
+                            """,
+                                (
+                                    item.title,
+                                    source_id,
+                                    item.rank,
+                                    "",
+                                    item.mobile_url,
+                                    data.crawl_time,
+                                    data.crawl_time,
+                                    now_str,
+                                    now_str,
+                                ),
+                            )
                             new_id = cursor.lastrowid
                             # 记录初始排名
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO rank_history
                                 (news_item_id, rank, crawl_time, created_at)
                                 VALUES (?, ?, ?, ?)
-                            """, (new_id, item.rank, data.crawl_time, now_str))
+                            """,
+                                (new_id, item.rank, data.crawl_time, now_str),
+                            )
                             new_count += 1
 
                     except sqlite3.Error as e:
-                        print(f"[远程存储] 保存新闻条目失败 [{item.title[:30]}...]: {e}")
+                        print(
+                            f"[远程存储] 保存新闻条目失败 [{item.title[:30]}...]: {e}"
+                        )
 
             total_items = new_count + updated_count
 
             # 记录抓取信息
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO crawl_records
                 (crawl_time, total_items, created_at)
                 VALUES (?, ?, ?)
-            """, (data.crawl_time, total_items, now_str))
+            """,
+                (data.crawl_time, total_items, now_str),
+            )
 
             # 获取刚插入的 crawl_record 的 ID
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id FROM crawl_records WHERE crawl_time = ?
-            """, (data.crawl_time,))
+            """,
+                (data.crawl_time,),
+            )
             record_row = cursor.fetchone()
             if record_row:
                 crawl_record_id = record_row[0]
 
                 # 记录成功的来源
                 for source_id in success_sources:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO crawl_source_status
                         (crawl_record_id, platform_id, status)
                         VALUES (?, ?, 'success')
-                    """, (crawl_record_id, source_id))
+                    """,
+                        (crawl_record_id, source_id),
+                    )
 
                 # 记录失败的来源
                 for failed_id in data.failed_ids:
                     # 确保失败的平台也在 platforms 表中
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO platforms (id, name, updated_at)
                         VALUES (?, ?, ?)
-                    """, (failed_id, failed_id, now_str))
+                    """,
+                        (failed_id, failed_id, now_str),
+                    )
 
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO crawl_source_status
                         (crawl_record_id, platform_id, status)
                         VALUES (?, ?, 'failed')
-                    """, (crawl_record_id, failed_id))
+                    """,
+                        (crawl_record_id, failed_id),
+                    )
 
             conn.commit()
 
@@ -584,11 +670,14 @@ class RemoteStorageBackend(StorageBackend):
             rank_history_map: Dict[int, List[int]] = {}
             if news_ids:
                 placeholders = ",".join("?" * len(news_ids))
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT news_item_id, rank FROM rank_history
                     WHERE news_item_id IN ({placeholders})
                     ORDER BY news_item_id, crawl_time
-                """, news_ids)
+                """,
+                    news_ids,
+                )
                 for rh_row in cursor.fetchall():
                     news_id, rank = rh_row[0], rh_row[1]
                     if news_id not in rank_history_map:
@@ -615,19 +704,21 @@ class RemoteStorageBackend(StorageBackend):
                 # 获取排名历史，如果没有则使用当前排名
                 ranks = rank_history_map.get(news_id, [row[4]])
 
-                items[platform_id].append(NewsItem(
-                    title=title,
-                    source_id=platform_id,
-                    source_name=platform_name,
-                    rank=row[4],
-                    url=row[5] or "",
-                    mobile_url=row[6] or "",
-                    crawl_time=row[8],  # last_crawl_time
-                    ranks=ranks,
-                    first_time=row[7],  # first_crawl_time
-                    last_time=row[8],   # last_crawl_time
-                    count=row[9],       # crawl_count
-                ))
+                items[platform_id].append(
+                    NewsItem(
+                        title=title,
+                        source_id=platform_id,
+                        source_name=platform_name,
+                        rank=row[4],
+                        url=row[5] or "",
+                        mobile_url=row[6] or "",
+                        crawl_time=row[8],  # last_crawl_time
+                        ranks=ranks,
+                        first_time=row[7],  # first_crawl_time
+                        last_time=row[8],  # last_crawl_time
+                        count=row[9],  # crawl_count
+                    )
+                )
 
             final_items = items
 
@@ -682,14 +773,17 @@ class RemoteStorageBackend(StorageBackend):
             latest_time = time_row[0]
 
             # 获取该时间的新闻数据，通过 JOIN 获取平台名称
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT n.title, n.platform_id, p.name as platform_name,
                        n.rank, n.url, n.mobile_url,
                        n.first_crawl_time, n.last_crawl_time, n.crawl_count
                 FROM news_items n
                 LEFT JOIN platforms p ON n.platform_id = p.id
                 WHERE n.last_crawl_time = ?
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             rows = cursor.fetchall()
             if not rows:
@@ -707,27 +801,32 @@ class RemoteStorageBackend(StorageBackend):
                 if platform_id not in items:
                     items[platform_id] = []
 
-                items[platform_id].append(NewsItem(
-                    title=row[0],
-                    source_id=platform_id,
-                    source_name=platform_name,
-                    rank=row[3],
-                    url=row[4] or "",
-                    mobile_url=row[5] or "",
-                    crawl_time=row[7],  # last_crawl_time
-                    ranks=[row[3]],
-                    first_time=row[6],  # first_crawl_time
-                    last_time=row[7],   # last_crawl_time
-                    count=row[8],       # crawl_count
-                ))
+                items[platform_id].append(
+                    NewsItem(
+                        title=row[0],
+                        source_id=platform_id,
+                        source_name=platform_name,
+                        rank=row[3],
+                        url=row[4] or "",
+                        mobile_url=row[5] or "",
+                        crawl_time=row[7],  # last_crawl_time
+                        ranks=[row[3]],
+                        first_time=row[6],  # first_crawl_time
+                        last_time=row[7],  # last_crawl_time
+                        count=row[8],  # crawl_count
+                    )
+                )
 
             # 获取失败的来源（针对最新一次抓取）
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT css.platform_id
                 FROM crawl_source_status css
                 JOIN crawl_records cr ON css.crawl_record_id = cr.id
                 WHERE cr.crawl_time = ? AND css.status = 'failed'
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             failed_ids = [row[0] for row in cursor.fetchall()]
 
@@ -768,12 +867,14 @@ class RemoteStorageBackend(StorageBackend):
             for source_id, news_list in historical_data.items.items():
                 historical_titles[source_id] = set()
                 for item in news_list:
-                    first_time = getattr(item, 'first_time', item.crawl_time)
+                    first_time = getattr(item, "first_time", item.crawl_time)
                     if first_time < current_time:
                         historical_titles[source_id].add(item.title)
 
             # 检查是否有历史数据
-            has_historical_data = any(len(titles) > 0 for titles in historical_titles.values())
+            has_historical_data = any(
+                len(titles) > 0 for titles in historical_titles.values()
+            )
             if not has_historical_data:
                 # 第一次抓取，没有"新增"概念
                 return {}
@@ -839,7 +940,9 @@ class RemoteStorageBackend(StorageBackend):
             print(f"[远程存储] 保存 TXT 快照失败: {e}")
             return None
 
-    def save_html_report(self, html_content: str, filename: str, is_summary: bool = False) -> Optional[str]:
+    def save_html_report(
+        self, html_content: str, filename: str, is_summary: bool = False
+    ) -> Optional[str]:
         """保存 HTML 报告到临时目录"""
         if not self.enable_html:
             return None
@@ -932,7 +1035,7 @@ class RemoteStorageBackend(StorageBackend):
 
         try:
             # 列出远程存储中 news/ 前缀下的所有对象
-            paginator = self.s3_client.get_paginator('list_objects_v2')
+            paginator = self.s3_client.get_paginator("list_objects_v2")
             pages = paginator.paginate(Bucket=self.bucket_name, Prefix="news/")
 
             # 收集需要删除的对象键
@@ -940,52 +1043,53 @@ class RemoteStorageBackend(StorageBackend):
             deleted_dates = set()
 
             for page in pages:
-                if 'Contents' not in page:
+                if "Contents" not in page:
                     continue
 
-                for obj in page['Contents']:
-                    key = obj['Key']
+                for obj in page["Contents"]:
+                    key = obj["Key"]
 
                     # 解析日期（格式: news/YYYY-MM-DD.db 或 news/YYYY年MM月DD日.db）
                     folder_date = None
                     try:
                         # ISO 格式: news/YYYY-MM-DD.db
-                        date_match = re.match(r'news/(\d{4})-(\d{2})-(\d{2})\.db$', key)
+                        date_match = re.match(r"news/(\d{4})-(\d{2})-(\d{2})\.db$", key)
                         if date_match:
                             folder_date = datetime(
                                 int(date_match.group(1)),
                                 int(date_match.group(2)),
                                 int(date_match.group(3)),
-                                tzinfo=pytz.timezone("Asia/Shanghai")
+                                tzinfo=pytz.timezone("Asia/Shanghai"),
                             )
                             date_str = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
                         else:
                             # 旧中文格式: news/YYYY年MM月DD日.db
-                            date_match = re.match(r'news/(\d{4})年(\d{2})月(\d{2})日\.db$', key)
+                            date_match = re.match(
+                                r"news/(\d{4})年(\d{2})月(\d{2})日\.db$", key
+                            )
                             if date_match:
                                 folder_date = datetime(
                                     int(date_match.group(1)),
                                     int(date_match.group(2)),
                                     int(date_match.group(3)),
-                                    tzinfo=pytz.timezone("Asia/Shanghai")
+                                    tzinfo=pytz.timezone("Asia/Shanghai"),
                                 )
                                 date_str = f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日"
                     except Exception:
                         continue
 
                     if folder_date and folder_date < cutoff_date:
-                        objects_to_delete.append({'Key': key})
+                        objects_to_delete.append({"Key": key})
                         deleted_dates.add(date_str)
 
             # 批量删除对象（每次最多 1000 个）
             if objects_to_delete:
                 batch_size = 1000
                 for i in range(0, len(objects_to_delete), batch_size):
-                    batch = objects_to_delete[i:i + batch_size]
+                    batch = objects_to_delete[i : i + batch_size]
                     try:
                         self.s3_client.delete_objects(
-                            Bucket=self.bucket_name,
-                            Delete={'Objects': batch}
+                            Bucket=self.bucket_name, Delete={"Objects": batch}
                         )
                         print(f"[远程存储] 删除 {len(batch)} 个对象")
                     except Exception as e:
@@ -1019,9 +1123,12 @@ class RemoteStorageBackend(StorageBackend):
 
             target_date = self._format_date_folder(date)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT pushed FROM push_records WHERE date = ?
-            """, (target_date,))
+            """,
+                (target_date,),
+            )
 
             row = cursor.fetchone()
             if row:
@@ -1050,14 +1157,17 @@ class RemoteStorageBackend(StorageBackend):
             target_date = self._format_date_folder(date)
             now_str = self._get_configured_time().strftime("%Y-%m-%d %H:%M:%S")
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO push_records (date, pushed, push_time, report_type, created_at)
                 VALUES (?, 1, ?, ?, ?)
                 ON CONFLICT(date) DO UPDATE SET
                     pushed = 1,
                     push_time = excluded.push_time,
                     report_type = excluded.report_type
-            """, (target_date, now_str, report_type, now_str))
+            """,
+                (target_date, now_str, report_type, now_str),
+            )
 
             conn.commit()
 
@@ -1099,13 +1209,16 @@ class RemoteStorageBackend(StorageBackend):
 
             # 同步 RSS 源信息到 rss_feeds 表
             for feed_id, feed_name in data.id_to_name.items():
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO rss_feeds (id, name, updated_at)
                     VALUES (?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         name = excluded.name,
                         updated_at = excluded.updated_at
-                """, (feed_id, feed_name, now_str))
+                """,
+                    (feed_id, feed_name, now_str),
+                )
 
             # 统计计数器
             new_count = 0
@@ -1116,16 +1229,20 @@ class RemoteStorageBackend(StorageBackend):
                     try:
                         # 检查是否已存在（通过 URL + feed_id）
                         if item.url:
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 SELECT id, title FROM rss_items
                                 WHERE url = ? AND feed_id = ?
-                            """, (item.url, feed_id))
+                            """,
+                                (item.url, feed_id),
+                            )
                             existing = cursor.fetchone()
 
                             if existing:
                                 # 已存在，更新记录
                                 existing_id = existing[0]
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     UPDATE rss_items SET
                                         title = ?,
                                         published_at = ?,
@@ -1135,74 +1252,124 @@ class RemoteStorageBackend(StorageBackend):
                                         crawl_count = crawl_count + 1,
                                         updated_at = ?
                                     WHERE id = ?
-                                """, (item.title, item.published_at, item.summary,
-                                      item.author, data.crawl_time, now_str, existing_id))
+                                """,
+                                    (
+                                        item.title,
+                                        item.published_at,
+                                        item.summary,
+                                        item.author,
+                                        data.crawl_time,
+                                        now_str,
+                                        existing_id,
+                                    ),
+                                )
                                 updated_count += 1
                             else:
                                 # 不存在，插入新记录
-                                cursor.execute("""
+                                cursor.execute(
+                                    """
                                     INSERT INTO rss_items
                                     (title, feed_id, url, published_at, summary, author,
                                      first_crawl_time, last_crawl_time, crawl_count,
                                      created_at, updated_at)
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                                """, (item.title, feed_id, item.url, item.published_at,
-                                      item.summary, item.author, data.crawl_time,
-                                      data.crawl_time, now_str, now_str))
+                                """,
+                                    (
+                                        item.title,
+                                        feed_id,
+                                        item.url,
+                                        item.published_at,
+                                        item.summary,
+                                        item.author,
+                                        data.crawl_time,
+                                        data.crawl_time,
+                                        now_str,
+                                        now_str,
+                                    ),
+                                )
                                 new_count += 1
                         else:
                             # URL 为空，直接插入
-                            cursor.execute("""
+                            cursor.execute(
+                                """
                                 INSERT INTO rss_items
                                 (title, feed_id, url, published_at, summary, author,
                                  first_crawl_time, last_crawl_time, crawl_count,
                                  created_at, updated_at)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-                            """, (item.title, feed_id, "", item.published_at,
-                                  item.summary, item.author, data.crawl_time,
-                                  data.crawl_time, now_str, now_str))
+                            """,
+                                (
+                                    item.title,
+                                    feed_id,
+                                    "",
+                                    item.published_at,
+                                    item.summary,
+                                    item.author,
+                                    data.crawl_time,
+                                    data.crawl_time,
+                                    now_str,
+                                    now_str,
+                                ),
+                            )
                             new_count += 1
 
                     except sqlite3.Error as e:
-                        print(f"[远程存储] 保存 RSS 条目失败 [{item.title[:30]}...]: {e}")
+                        print(
+                            f"[远程存储] 保存 RSS 条目失败 [{item.title[:30]}...]: {e}"
+                        )
 
             total_items = new_count + updated_count
 
             # 记录抓取信息
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO rss_crawl_records
                 (crawl_time, total_items, created_at)
                 VALUES (?, ?, ?)
-            """, (data.crawl_time, total_items, now_str))
+            """,
+                (data.crawl_time, total_items, now_str),
+            )
 
             # 记录抓取状态
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id FROM rss_crawl_records WHERE crawl_time = ?
-            """, (data.crawl_time,))
+            """,
+                (data.crawl_time,),
+            )
             record_row = cursor.fetchone()
             if record_row:
                 crawl_record_id = record_row[0]
 
                 # 记录成功的源
                 for feed_id in data.items.keys():
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO rss_crawl_status
                         (crawl_record_id, feed_id, status)
                         VALUES (?, ?, 'success')
-                    """, (crawl_record_id, feed_id))
+                    """,
+                        (crawl_record_id, feed_id),
+                    )
 
                 # 记录失败的源
                 for failed_id in data.failed_ids:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO rss_feeds (id, name, updated_at)
                         VALUES (?, ?, ?)
-                    """, (failed_id, failed_id, now_str))
+                    """,
+                        (failed_id, failed_id, now_str),
+                    )
 
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO rss_crawl_status
                         (crawl_record_id, feed_id, status)
                         VALUES (?, ?, 'failed')
-                    """, (crawl_record_id, failed_id))
+                    """,
+                        (crawl_record_id, failed_id),
+                    )
 
             conn.commit()
 
@@ -1265,19 +1432,21 @@ class RemoteStorageBackend(StorageBackend):
                 if feed_id not in items:
                     items[feed_id] = []
 
-                items[feed_id].append(RSSItem(
-                    title=row[1],
-                    feed_id=feed_id,
-                    feed_name=feed_name,
-                    url=row[4] or "",
-                    published_at=row[5] or "",
-                    summary=row[6] or "",
-                    author=row[7] or "",
-                    crawl_time=row[9],
-                    first_time=row[8],
-                    last_time=row[9],
-                    count=row[10],
-                ))
+                items[feed_id].append(
+                    RSSItem(
+                        title=row[1],
+                        feed_id=feed_id,
+                        feed_name=feed_name,
+                        url=row[4] or "",
+                        published_at=row[5] or "",
+                        summary=row[6] or "",
+                        author=row[7] or "",
+                        crawl_time=row[9],
+                        first_time=row[8],
+                        last_time=row[9],
+                        count=row[10],
+                    )
+                )
 
             # 获取最新的抓取时间
             cursor.execute("""
@@ -1338,13 +1507,15 @@ class RemoteStorageBackend(StorageBackend):
             for feed_id, rss_list in historical_data.items.items():
                 historical_urls[feed_id] = set()
                 for item in rss_list:
-                    first_time = getattr(item, 'first_time', item.crawl_time)
+                    first_time = getattr(item, "first_time", item.crawl_time)
                     if first_time < current_time:
                         if item.url:
                             historical_urls[feed_id].add(item.url)
 
             # 检查是否有历史数据
-            has_historical_data = any(len(urls) > 0 for urls in historical_urls.values())
+            has_historical_data = any(
+                len(urls) > 0 for urls in historical_urls.values()
+            )
             if not has_historical_data:
                 # 第一次抓取，没有"新增"概念
                 return {}
@@ -1394,7 +1565,8 @@ class RemoteStorageBackend(StorageBackend):
             latest_time = time_row[0]
 
             # 获取该时间的 RSS 数据
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT i.id, i.title, i.feed_id, f.name as feed_name,
                        i.url, i.published_at, i.summary, i.author,
                        i.first_crawl_time, i.last_crawl_time, i.crawl_count
@@ -1402,7 +1574,9 @@ class RemoteStorageBackend(StorageBackend):
                 LEFT JOIN rss_feeds f ON i.feed_id = f.id
                 WHERE i.last_crawl_time = ?
                 ORDER BY i.published_at DESC
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             rows = cursor.fetchall()
             if not rows:
@@ -1421,27 +1595,32 @@ class RemoteStorageBackend(StorageBackend):
                 if feed_id not in items:
                     items[feed_id] = []
 
-                items[feed_id].append(RSSItem(
-                    title=row[1],
-                    feed_id=feed_id,
-                    feed_name=feed_name,
-                    url=row[4] or "",
-                    published_at=row[5] or "",
-                    summary=row[6] or "",
-                    author=row[7] or "",
-                    crawl_time=row[9],
-                    first_time=row[8],
-                    last_time=row[9],
-                    count=row[10],
-                ))
+                items[feed_id].append(
+                    RSSItem(
+                        title=row[1],
+                        feed_id=feed_id,
+                        feed_name=feed_name,
+                        url=row[4] or "",
+                        published_at=row[5] or "",
+                        summary=row[6] or "",
+                        author=row[7] or "",
+                        crawl_time=row[9],
+                        first_time=row[8],
+                        last_time=row[9],
+                        count=row[10],
+                    )
+                )
 
             # 获取失败的源（针对最新一次抓取）
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT cs.feed_id
                 FROM rss_crawl_status cs
                 JOIN rss_crawl_records cr ON cs.crawl_record_id = cr.id
                 WHERE cr.crawl_time = ? AND cs.status = 'failed'
-            """, (latest_time,))
+            """,
+                (latest_time,),
+            )
 
             failed_ids = [row[0] for row in cursor.fetchall()]
 
@@ -1514,9 +1693,11 @@ class RemoteStorageBackend(StorageBackend):
             # 下载（使用 get_object + iter_chunks 处理 chunked encoding）
             try:
                 local_date_dir.mkdir(parents=True, exist_ok=True)
-                response = self.s3_client.get_object(Bucket=self.bucket_name, Key=remote_key)
-                with open(local_db_path, 'wb') as f:
-                    for chunk in response['Body'].iter_chunks(chunk_size=1024*1024):
+                response = self.s3_client.get_object(
+                    Bucket=self.bucket_name, Key=remote_key
+                )
+                with open(local_db_path, "wb") as f:
+                    for chunk in response["Body"].iter_chunks(chunk_size=1024 * 1024):
                         f.write(chunk)
                 print(f"[远程存储] 已拉取: {remote_key} -> {local_db_path}")
                 pulled_count += 1
@@ -1536,17 +1717,17 @@ class RemoteStorageBackend(StorageBackend):
         dates = []
 
         try:
-            paginator = self.s3_client.get_paginator('list_objects_v2')
+            paginator = self.s3_client.get_paginator("list_objects_v2")
             pages = paginator.paginate(Bucket=self.bucket_name, Prefix="news/")
 
             for page in pages:
-                if 'Contents' not in page:
+                if "Contents" not in page:
                     continue
 
-                for obj in page['Contents']:
-                    key = obj['Key']
+                for obj in page["Contents"]:
+                    key = obj["Key"]
                     # 解析日期
-                    date_match = re.match(r'news/(\d{4}-\d{2}-\d{2})\.db$', key)
+                    date_match = re.match(r"news/(\d{4}-\d{2}-\d{2})\.db$", key)
                     if date_match:
                         dates.append(date_match.group(1))
 

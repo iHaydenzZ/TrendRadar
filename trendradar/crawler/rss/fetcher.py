@@ -21,12 +21,15 @@ from trendradar.utils.time import get_configured_time, is_within_days, DEFAULT_T
 @dataclass
 class RSSFeedConfig:
     """RSS 源配置"""
-    id: str                     # 源 ID
-    name: str                   # 显示名称
-    url: str                    # RSS URL
-    max_items: int = 0          # 最大条目数（0=不限制）
-    enabled: bool = True        # 是否启用
-    max_age_days: Optional[int] = None  # 文章最大年龄（天），覆盖全局设置；None=使用全局，0=禁用过滤
+
+    id: str  # 源 ID
+    name: str  # 显示名称
+    url: str  # RSS URL
+    max_items: int = 0  # 最大条目数（0=不限制）
+    enabled: bool = True  # 是否启用
+    max_age_days: Optional[int] = (
+        None  # 文章最大年龄（天），覆盖全局设置；None=使用全局，0=禁用过滤
+    )
 
 
 class RSSFetcher:
@@ -71,11 +74,13 @@ class RSSFetcher:
     def _create_session(self) -> requests.Session:
         """创建请求会话"""
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": "TrendRadar/2.0 RSS Reader (https://github.com/trendradar)",
-            "Accept": "application/feed+json, application/json, application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        })
+        session.headers.update(
+            {
+                "User-Agent": "TrendRadar/2.0 RSS Reader (https://github.com/trendradar)",
+                "Accept": "application/feed+json, application/json, application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            }
+        )
 
         if self.use_proxy and self.proxy_url:
             session.proxies = {
@@ -145,7 +150,7 @@ class RSSFetcher:
 
             # 限制条目数量（0=不限制）
             if feed.max_items > 0:
-                parsed_items = parsed_items[:feed.max_items]
+                parsed_items = parsed_items[: feed.max_items]
 
             # 转换为 RSSItem（使用配置的时区）
             now = get_configured_time(self.timezone)
@@ -228,7 +233,9 @@ class RSSFetcher:
                 all_items[feed.id] = items
 
         total_items = sum(len(items) for items in all_items.values())
-        print(f"[RSS] 抓取完成: {len(all_items)} 个源成功, {len(failed_ids)} 个失败, 共 {total_items} 条")
+        print(
+            f"[RSS] 抓取完成: {len(all_items)} 个源成功, {len(failed_ids)} 个失败, 共 {total_items} 条"
+        )
 
         return RSSData(
             date=crawl_date,
@@ -275,11 +282,15 @@ class RSSFetcher:
                     max_age_days = int(max_age_days_raw)
                     if max_age_days < 0:
                         feed_id = feed_config.get("id", "unknown")
-                        print(f"[警告] RSS feed '{feed_id}' 的 max_age_days 为负数，将使用全局默认值")
+                        print(
+                            f"[警告] RSS feed '{feed_id}' 的 max_age_days 为负数，将使用全局默认值"
+                        )
                         max_age_days = None
                 except (ValueError, TypeError):
                     feed_id = feed_config.get("id", "unknown")
-                    print(f"[警告] RSS feed '{feed_id}' 的 max_age_days 格式错误：{max_age_days_raw}")
+                    print(
+                        f"[警告] RSS feed '{feed_id}' 的 max_age_days 格式错误：{max_age_days_raw}"
+                    )
                     max_age_days = None
 
             feed = RSSFeedConfig(

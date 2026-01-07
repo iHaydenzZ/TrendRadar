@@ -201,11 +201,7 @@ class NewsAnalyzer:
                 cfg["DINGTALK_WEBHOOK_URL"],
                 cfg["WEWORK_WEBHOOK_URL"],
                 (cfg["TELEGRAM_BOT_TOKEN"] and cfg["TELEGRAM_CHAT_ID"]),
-                (
-                    cfg["EMAIL_FROM"]
-                    and cfg["EMAIL_PASSWORD"]
-                    and cfg["EMAIL_TO"]
-                ),
+                (cfg["EMAIL_FROM"] and cfg["EMAIL_PASSWORD"] and cfg["EMAIL_TO"]),
                 (cfg["NTFY_SERVER_URL"] and cfg["NTFY_TOPIC"]),
                 cfg["BARK_URL"],
                 cfg["SLACK_WEBHOOK_URL"],
@@ -343,7 +339,9 @@ class NewsAnalyzer:
                 id_to_name=id_to_name,
                 mode=mode,
                 is_daily_summary=is_daily_summary,
-                update_info=self.update_info if self.ctx.config["SHOW_VERSION_UPDATE"] else None,
+                update_info=self.update_info
+                if self.ctx.config["SHOW_VERSION_UPDATE"]
+                else None,
                 rss_items=rss_items,
                 rss_new_items=rss_new_items,
             )
@@ -375,11 +373,7 @@ class NewsAnalyzer:
         news_count = sum(len(stat.get("titles", [])) for stat in stats) if stats else 0
         rss_count = len(rss_items) if rss_items else 0
 
-        if (
-            cfg["ENABLE_NOTIFICATION"]
-            and has_notification
-            and has_any_content
-        ):
+        if cfg["ENABLE_NOTIFICATION"] and has_notification and has_any_content:
             # 输出推送内容统计
             content_parts = []
             if news_count > 0:
@@ -387,7 +381,9 @@ class NewsAnalyzer:
             if rss_count > 0:
                 content_parts.append(f"RSS {rss_count} 条")
             total_count = news_count + rss_count
-            print(f"[推送] 准备发送：{' + '.join(content_parts)}，合计 {total_count} 条")
+            print(
+                f"[推送] 准备发送：{' + '.join(content_parts)}，合计 {total_count} 条"
+            )
 
             # 推送窗口控制
             if cfg["PUSH_WINDOW"]["ENABLED"]:
@@ -410,10 +406,14 @@ class NewsAnalyzer:
                         print(f"推送窗口控制：今天首次推送")
 
             # 准备报告数据
-            report_data = self.ctx.prepare_report(stats, failed_ids, new_titles, id_to_name, mode)
+            report_data = self.ctx.prepare_report(
+                stats, failed_ids, new_titles, id_to_name, mode
+            )
 
             # 是否发送版本更新信息
-            update_info_to_send = self.update_info if cfg["SHOW_VERSION_UPDATE"] else None
+            update_info_to_send = (
+                self.update_info if cfg["SHOW_VERSION_UPDATE"] else None
+            )
 
             # 使用 NotificationDispatcher 发送到所有渠道（合并热榜+RSS）
             dispatcher = self.ctx.create_notification_dispatcher()
@@ -447,16 +447,13 @@ class NewsAnalyzer:
             print("⚠️ 警告：通知功能已启用但未配置任何通知渠道，将跳过通知发送")
         elif not cfg["ENABLE_NOTIFICATION"]:
             print(f"跳过{report_type}通知：通知功能已禁用")
-        elif (
-            cfg["ENABLE_NOTIFICATION"]
-            and has_notification
-            and not has_any_content
-        ):
+        elif cfg["ENABLE_NOTIFICATION"] and has_notification and not has_any_content:
             mode_strategy = self._get_mode_strategy()
             if "实时" in report_type:
                 if self.report_mode == "incremental":
                     has_new = bool(
-                        new_titles and any(len(titles) > 0 for titles in new_titles.values())
+                        new_titles
+                        and any(len(titles) > 0 for titles in new_titles.values())
                     )
                     if not has_new and not has_rss_content:
                         print("跳过实时推送通知：增量模式下未检测到新增的新闻和RSS")
@@ -490,9 +487,15 @@ class NewsAnalyzer:
         if not analysis_data:
             return None
 
-        all_results, id_to_name, title_info, new_titles, word_groups, filter_words, global_filters = (
-            analysis_data
-        )
+        (
+            all_results,
+            id_to_name,
+            title_info,
+            new_titles,
+            word_groups,
+            filter_words,
+            global_filters,
+        ) = analysis_data
 
         # 运行分析流水线
         stats, html_file = self._run_analysis_pipeline(
@@ -542,9 +545,15 @@ class NewsAnalyzer:
         if not analysis_data:
             return None
 
-        all_results, id_to_name, title_info, new_titles, word_groups, filter_words, global_filters = (
-            analysis_data
-        )
+        (
+            all_results,
+            id_to_name,
+            title_info,
+            new_titles,
+            word_groups,
+            filter_words,
+            global_filters,
+        ) = analysis_data
 
         # 运行分析流水线（静默模式，避免重复输出日志）
         _, html_file = self._run_analysis_pipeline(
@@ -596,9 +605,7 @@ class NewsAnalyzer:
             else:
                 ids.append(platform["id"])
 
-        print(
-            f"配置的监控平台: {[p.get('name', p['id']) for p in self.ctx.platforms]}"
-        )
+        print(f"配置的监控平台: {[p.get('name', p['id']) for p in self.ctx.platforms]}")
         print(f"开始爬取数据，请求间隔 {self.request_interval} 毫秒")
         Path("output").mkdir(parents=True, exist_ok=True)
 
@@ -661,11 +668,15 @@ class NewsAnalyzer:
                         max_age_days = int(max_age_days_raw)
                         if max_age_days < 0:
                             feed_id = feed_config.get("id", "unknown")
-                            print(f"[警告] RSS feed '{feed_id}' 的 max_age_days 为负数，将使用全局默认值")
+                            print(
+                                f"[警告] RSS feed '{feed_id}' 的 max_age_days 为负数，将使用全局默认值"
+                            )
                             max_age_days = None
                     except (ValueError, TypeError):
                         feed_id = feed_config.get("id", "unknown")
-                        print(f"[警告] RSS feed '{feed_id}' 的 max_age_days 格式错误：{max_age_days_raw}")
+                        print(
+                            f"[警告] RSS feed '{feed_id}' 的 max_age_days 格式错误：{max_age_days_raw}"
+                        )
                         max_age_days = None
 
                 feed = RSSFeedConfig(
@@ -726,7 +737,9 @@ class NewsAnalyzer:
             print(f"[RSS] 抓取失败: {e}")
             return None, None
 
-    def _process_rss_data_by_mode(self, rss_data) -> Tuple[Optional[List[Dict]], Optional[List[Dict]]]:
+    def _process_rss_data_by_mode(
+        self, rss_data
+    ) -> Tuple[Optional[List[Dict]], Optional[List[Dict]]]:
         """
         按报告模式处理 RSS 数据，返回与热榜相同格式的统计结构
 
@@ -768,7 +781,9 @@ class NewsAnalyzer:
         new_items_dict = self.storage_manager.detect_new_rss_items(rss_data)
         new_items_list = None
         if new_items_dict:
-            new_items_list = self._convert_rss_items_to_list(new_items_dict, rss_data.id_to_name)
+            new_items_list = self._convert_rss_items_to_list(
+                new_items_dict, rss_data.id_to_name
+            )
             if new_items_list:
                 print(f"[RSS] 检测到 {len(new_items_list)} 条新增")
 
@@ -802,7 +817,9 @@ class NewsAnalyzer:
                 print("[RSS] 当前榜单模式：没有 RSS 数据")
                 return None, None
 
-            all_items_list = self._convert_rss_items_to_list(latest_data.items, latest_data.id_to_name)
+            all_items_list = self._convert_rss_items_to_list(
+                latest_data.items, latest_data.id_to_name
+            )
             rss_stats, total = count_rss_frequency(
                 rss_items=all_items_list,
                 word_groups=word_groups,
@@ -841,7 +858,9 @@ class NewsAnalyzer:
                 print("[RSS] 当日汇总模式：没有 RSS 数据")
                 return None, None
 
-            all_items_list = self._convert_rss_items_to_list(all_data.items, all_data.id_to_name)
+            all_items_list = self._convert_rss_items_to_list(
+                all_data.items, all_data.id_to_name
+            )
             rss_stats, total = count_rss_frequency(
                 rss_items=all_items_list,
                 word_groups=word_groups,
@@ -875,7 +894,9 @@ class NewsAnalyzer:
 
         return rss_stats, rss_new_stats
 
-    def _convert_rss_items_to_list(self, items_dict: Dict, id_to_name: Dict) -> List[Dict]:
+    def _convert_rss_items_to_list(
+        self, items_dict: Dict, id_to_name: Dict
+    ) -> List[Dict]:
         """将 RSS 条目字典转换为列表格式，并应用新鲜度过滤（用于推送）"""
         rss_items = []
         filtered_count = 0
@@ -907,23 +928,29 @@ class NewsAnalyzer:
             for item in items:
                 # 应用新鲜度过滤（仅在启用时）
                 if freshness_enabled and max_days > 0:
-                    if item.published_at and not is_within_days(item.published_at, max_days, timezone):
+                    if item.published_at and not is_within_days(
+                        item.published_at, max_days, timezone
+                    ):
                         filtered_count += 1
                         continue  # 跳过超过指定天数的文章
 
-                rss_items.append({
-                    "title": item.title,
-                    "feed_id": feed_id,
-                    "feed_name": id_to_name.get(feed_id, feed_id),
-                    "url": item.url,
-                    "published_at": item.published_at,
-                    "summary": item.summary,
-                    "author": item.author,
-                })
+                rss_items.append(
+                    {
+                        "title": item.title,
+                        "feed_id": feed_id,
+                        "feed_name": id_to_name.get(feed_id, feed_id),
+                        "url": item.url,
+                        "published_at": item.published_at,
+                        "summary": item.summary,
+                        "author": item.author,
+                    }
+                )
 
         # 输出过滤统计
         if filtered_count > 0:
-            print(f"[RSS] 新鲜度过滤：跳过 {filtered_count} 篇超过指定天数的旧文章（仍保留在数据库中）")
+            print(
+                f"[RSS] 新鲜度过滤：跳过 {filtered_count} 篇超过指定天数的旧文章（仍保留在数据库中）"
+            )
 
         return rss_items
 
@@ -933,10 +960,13 @@ class NewsAnalyzer:
             word_groups, filter_words, global_filters = self.ctx.load_frequency_words()
             if word_groups or filter_words or global_filters:
                 from trendradar.core.frequency import matches_word_groups
+
                 filtered_items = []
                 for item in rss_items:
                     title = item.get("title", "")
-                    if matches_word_groups(title, word_groups, filter_words, global_filters):
+                    if matches_word_groups(
+                        title, word_groups, filter_words, global_filters
+                    ):
                         filtered_items.append(item)
 
                 original_count = len(rss_items)
@@ -988,7 +1018,11 @@ class NewsAnalyzer:
             return None
 
     def _execute_mode_strategy(
-        self, mode_strategy: Dict, results: Dict, id_to_name: Dict, failed_ids: List,
+        self,
+        mode_strategy: Dict,
+        results: Dict,
+        id_to_name: Dict,
+        failed_ids: List,
         rss_items: Optional[List[Dict]] = None,
         rss_new_items: Optional[List[Dict]] = None,
     ) -> Optional[str]:
@@ -1139,8 +1173,12 @@ class NewsAnalyzer:
 
             # 执行模式策略，传递 RSS 数据用于合并推送
             self._execute_mode_strategy(
-                mode_strategy, results, id_to_name, failed_ids,
-                rss_items=rss_items, rss_new_items=rss_new_items
+                mode_strategy,
+                results,
+                id_to_name,
+                failed_ids,
+                rss_items=rss_items,
+                rss_new_items=rss_new_items,
             )
 
         except Exception as e:

@@ -46,26 +46,22 @@ class SystemManagementTools:
             # 获取系统状态
             status = self.data_service.get_system_status()
 
-            return {
-                **status,
-                "success": True
-            }
+            return {**status, "success": True}
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             return {
                 "success": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(e)
-                }
+                "error": {"code": "INTERNAL_ERROR", "message": str(e)},
             }
 
-    def trigger_crawl(self, platforms: Optional[List[str]] = None, save_to_local: bool = False, include_url: bool = False) -> Dict:
+    def trigger_crawl(
+        self,
+        platforms: Optional[List[str]] = None,
+        save_to_local: bool = False,
+        include_url: bool = False,
+    ) -> Dict:
         """
         手动触发一次临时爬取任务（可选持久化）
 
@@ -92,7 +88,11 @@ class SystemManagementTools:
             from trendradar.crawler.fetcher import DataFetcher
             from trendradar.storage.local import LocalStorageBackend
             from trendradar.storage.base import convert_crawl_results_to_news_data
-            from trendradar.utils.time import get_configured_time, format_date_folder, format_time_filename
+            from trendradar.utils.time import (
+                get_configured_time,
+                format_date_folder,
+                format_time_filename,
+            )
             from ..services.cache_service import get_cache
 
             # 参数验证
@@ -102,8 +102,7 @@ class SystemManagementTools:
             config_path = self.project_root / "config" / "config.yaml"
             if not config_path.exists():
                 raise CrawlTaskError(
-                    "配置文件不存在",
-                    suggestion=f"请确保配置文件存在: {config_path}"
+                    "配置文件不存在", suggestion=f"请确保配置文件存在: {config_path}"
                 )
 
             # 读取配置
@@ -115,7 +114,7 @@ class SystemManagementTools:
             if not all_platforms:
                 raise CrawlTaskError(
                     "配置文件中没有平台配置",
-                    suggestion="请检查 config/config.yaml 中的 platforms 配置"
+                    suggestion="请检查 config/config.yaml 中的 platforms 配置",
                 )
 
             # 过滤平台
@@ -124,7 +123,7 @@ class SystemManagementTools:
                 if not target_platforms:
                     raise CrawlTaskError(
                         f"指定的平台不存在: {platforms}",
-                        suggestion=f"可用平台: {[p['id'] for p in all_platforms]}"
+                        suggestion=f"可用平台: {[p['id'] for p in all_platforms]}",
                     )
             else:
                 target_platforms = all_platforms
@@ -137,7 +136,9 @@ class SystemManagementTools:
                 else:
                     ids.append(platform["id"])
 
-            print(f"开始临时爬取，平台: {[p.get('name', p['id']) for p in target_platforms]}")
+            print(
+                f"开始临时爬取，平台: {[p.get('name', p['id']) for p in target_platforms]}"
+            )
 
             # 初始化数据获取器
             advanced = config_data.get("advanced", {})
@@ -145,14 +146,13 @@ class SystemManagementTools:
             proxy_url = None
             if crawler_config.get("use_proxy"):
                 proxy_url = crawler_config.get("default_proxy")
-            
+
             fetcher = DataFetcher(proxy_url=proxy_url)
             request_interval = crawler_config.get("request_interval", 100)
 
             # 执行爬取
             results, id_to_name, failed_ids = fetcher.crawl_websites(
-                ids_list=ids,
-                request_interval=request_interval
+                ids_list=ids, request_interval=request_interval
             )
 
             # 获取当前时间（统一使用 trendradar 的时间工具）
@@ -168,7 +168,7 @@ class SystemManagementTools:
                 id_to_name=id_to_name,
                 failed_ids=failed_ids,
                 crawl_time=crawl_time_str,
-                crawl_date=crawl_date
+                crawl_date=crawl_date,
             )
 
             # 初始化存储后端
@@ -176,7 +176,7 @@ class SystemManagementTools:
                 data_dir=str(self.project_root / "output"),
                 enable_txt=True,
                 enable_html=True,
-                timezone=timezone
+                timezone=timezone,
             )
 
             # 尝试持久化数据
@@ -188,7 +188,7 @@ class SystemManagementTools:
                 # 1. 保存到 SQLite (核心持久化)
                 if storage.save_news_data(news_data):
                     save_success = True
-                
+
                 # 2. 如果请求保存到本地，生成 TXT/HTML 快照
                 if save_to_local:
                     # 保存 TXT
@@ -197,7 +197,9 @@ class SystemManagementTools:
                         saved_files["txt"] = txt_path
 
                     # 保存 HTML (使用简化版生成器)
-                    html_content = self._generate_simple_html(results, id_to_name, failed_ids, current_time)
+                    html_content = self._generate_simple_html(
+                        results, id_to_name, failed_ids, current_time
+                    )
                     html_filename = f"{crawl_time_str}.html"
                     html_path = storage.save_html_report(html_content, html_filename)
                     if html_path:
@@ -223,7 +225,7 @@ class SystemManagementTools:
                         "platform_id": platform_id,
                         "platform_name": platform_name,
                         "title": title,
-                        "ranks": info.get("ranks", [])
+                        "ranks": info.get("ranks", []),
                     }
                     if include_url:
                         news_item["url"] = info.get("url", "")
@@ -239,7 +241,7 @@ class SystemManagementTools:
                 "total_news": len(news_response_data),
                 "failed_platforms": failed_ids,
                 "data": news_response_data,
-                "saved_to_local": save_success and save_to_local
+                "saved_to_local": save_success and save_to_local,
             }
 
             if save_success:
@@ -247,13 +249,20 @@ class SystemManagementTools:
                     result["saved_files"] = saved_files
                     result["note"] = "数据已保存到 SQLite 数据库及 output 文件夹"
                 else:
-                    result["note"] = "数据已保存到 SQLite 数据库 (仅内存中返回结果，未生成TXT快照)"
+                    result["note"] = (
+                        "数据已保存到 SQLite 数据库 (仅内存中返回结果，未生成TXT快照)"
+                    )
             else:
                 # 明确告知用户保存失败
                 result["saved_to_local"] = False
                 result["save_error"] = save_error_msg
-                if "Read-only file system" in save_error_msg or "Permission denied" in save_error_msg:
-                    result["note"] = "爬取成功，但无法写入数据库（Docker只读模式）。数据仅在本次返回中有效。"
+                if (
+                    "Read-only file system" in save_error_msg
+                    or "Permission denied" in save_error_msg
+                ):
+                    result["note"] = (
+                        "爬取成功，但无法写入数据库（Docker只读模式）。数据仅在本次返回中有效。"
+                    )
                 else:
                     result["note"] = f"爬取成功但保存失败: {save_error_msg}"
 
@@ -263,22 +272,22 @@ class SystemManagementTools:
             return result
 
         except MCPError as e:
-            return {
-                "success": False,
-                "error": e.to_dict()
-            }
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
             import traceback
+
             return {
                 "success": False,
                 "error": {
                     "code": "INTERNAL_ERROR",
                     "message": str(e),
-                    "traceback": traceback.format_exc()
-                }
+                    "traceback": traceback.format_exc(),
+                },
             }
 
-    def _generate_simple_html(self, results: Dict, id_to_name: Dict, failed_ids: List, now) -> str:
+    def _generate_simple_html(
+        self, results: Dict, id_to_name: Dict, failed_ids: List, now
+    ) -> str:
         """生成简化的 HTML 报告"""
         html = """<!DOCTYPE html>
 <html>
@@ -336,19 +345,19 @@ class SystemManagementTools:
                     html += f'                <a class="link" href="{self._html_escape(url)}" target="_blank">链接</a>\n'
                 if mobile_url and mobile_url != url:
                     html += f'                <a class="link" href="{self._html_escape(mobile_url)}" target="_blank">移动版</a>\n'
-                html += '            </div>\n'
+                html += "            </div>\n"
 
-            html += '        </div>\n\n'
+            html += "        </div>\n\n"
 
         # 失败的平台
         if failed_ids:
             html += '        <div class="failed">\n'
-            html += '            <h3>请求失败的平台</h3>\n'
-            html += '            <ul>\n'
+            html += "            <h3>请求失败的平台</h3>\n"
+            html += "            <ul>\n"
             for platform_id in failed_ids:
-                html += f'                <li>{self._html_escape(platform_id)}</li>\n'
-            html += '            </ul>\n'
-            html += '        </div>\n'
+                html += f"                <li>{self._html_escape(platform_id)}</li>\n"
+            html += "            </ul>\n"
+            html += "        </div>\n"
 
         html += """    </div>
 </body>

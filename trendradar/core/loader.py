@@ -45,7 +45,8 @@ def _load_app_config(config_data: Dict) -> Dict:
     return {
         "VERSION_CHECK_URL": advanced.get("version_check_url", ""),
         "SHOW_VERSION_UPDATE": app_config.get("show_version_update", True),
-        "TIMEZONE": _get_env_str("TIMEZONE") or app_config.get("timezone", "Asia/Shanghai"),
+        "TIMEZONE": _get_env_str("TIMEZONE")
+        or app_config.get("timezone", "Asia/Shanghai"),
     }
 
 
@@ -58,7 +59,9 @@ def _load_crawler_config(config_data: Dict) -> Dict:
         "REQUEST_INTERVAL": crawler_config.get("request_interval", 100),
         "USE_PROXY": crawler_config.get("use_proxy", False),
         "DEFAULT_PROXY": crawler_config.get("default_proxy", ""),
-        "ENABLE_CRAWLER": enable_crawler_env if enable_crawler_env is not None else crawler_config.get("enabled", True),
+        "ENABLE_CRAWLER": enable_crawler_env
+        if enable_crawler_env is not None
+        else crawler_config.get("enabled", True),
     }
 
 
@@ -73,12 +76,19 @@ def _load_report_config(config_data: Dict) -> Dict:
     display_mode_env = _get_env_str("DISPLAY_MODE")
 
     return {
-        "REPORT_MODE": _get_env_str("REPORT_MODE") or report_config.get("mode", "daily"),
-        "DISPLAY_MODE": display_mode_env or report_config.get("display_mode", "keyword"),
+        "REPORT_MODE": _get_env_str("REPORT_MODE")
+        or report_config.get("mode", "daily"),
+        "DISPLAY_MODE": display_mode_env
+        or report_config.get("display_mode", "keyword"),
         "RANK_THRESHOLD": report_config.get("rank_threshold", 10),
-        "SORT_BY_POSITION_FIRST": sort_by_position_env if sort_by_position_env is not None else report_config.get("sort_by_position_first", False),
-        "MAX_NEWS_PER_KEYWORD": max_news_env or report_config.get("max_news_per_keyword", 0),
-        "REVERSE_CONTENT_ORDER": reverse_content_env if reverse_content_env is not None else report_config.get("reverse_content_order", False),
+        "SORT_BY_POSITION_FIRST": sort_by_position_env
+        if sort_by_position_env is not None
+        else report_config.get("sort_by_position_first", False),
+        "MAX_NEWS_PER_KEYWORD": max_news_env
+        or report_config.get("max_news_per_keyword", 0),
+        "REVERSE_CONTENT_ORDER": reverse_content_env
+        if reverse_content_env is not None
+        else report_config.get("reverse_content_order", False),
     }
 
 
@@ -91,7 +101,9 @@ def _load_notification_config(config_data: Dict) -> Dict:
     enable_notification_env = _get_env_bool("ENABLE_NOTIFICATION")
 
     return {
-        "ENABLE_NOTIFICATION": enable_notification_env if enable_notification_env is not None else notification.get("enabled", True),
+        "ENABLE_NOTIFICATION": enable_notification_env
+        if enable_notification_env is not None
+        else notification.get("enabled", True),
         "MESSAGE_BATCH_SIZE": batch_size.get("default", 4000),
         "DINGTALK_BATCH_SIZE": batch_size.get("dingtalk", 20000),
         "FEISHU_BATCH_SIZE": batch_size.get("feishu", 29000),
@@ -99,7 +111,8 @@ def _load_notification_config(config_data: Dict) -> Dict:
         "SLACK_BATCH_SIZE": batch_size.get("slack", 4000),
         "BATCH_SEND_INTERVAL": advanced.get("batch_send_interval", 1.0),
         "FEISHU_MESSAGE_SEPARATOR": advanced.get("feishu_message_separator", "---"),
-        "MAX_ACCOUNTS_PER_CHANNEL": _get_env_int("MAX_ACCOUNTS_PER_CHANNEL") or advanced.get("max_accounts_per_channel", 3),
+        "MAX_ACCOUNTS_PER_CHANNEL": _get_env_int("MAX_ACCOUNTS_PER_CHANNEL")
+        or advanced.get("max_accounts_per_channel", 3),
     }
 
 
@@ -112,12 +125,17 @@ def _load_push_window_config(config_data: Dict) -> Dict:
     once_per_day_env = _get_env_bool("PUSH_WINDOW_ONCE_PER_DAY")
 
     return {
-        "ENABLED": enabled_env if enabled_env is not None else push_window.get("enabled", False),
+        "ENABLED": enabled_env
+        if enabled_env is not None
+        else push_window.get("enabled", False),
         "TIME_RANGE": {
-            "START": _get_env_str("PUSH_WINDOW_START") or push_window.get("start", "08:00"),
+            "START": _get_env_str("PUSH_WINDOW_START")
+            or push_window.get("start", "08:00"),
             "END": _get_env_str("PUSH_WINDOW_END") or push_window.get("end", "22:00"),
         },
-        "ONCE_PER_DAY": once_per_day_env if once_per_day_env is not None else push_window.get("once_per_day", True),
+        "ONCE_PER_DAY": once_per_day_env
+        if once_per_day_env is not None
+        else push_window.get("once_per_day", True),
     }
 
 
@@ -140,7 +158,9 @@ def _load_rss_config(config_data: Dict) -> Dict:
     advanced_crawler = advanced.get("crawler", {})
 
     # RSS 代理配置：优先使用 RSS 专属代理，否则复用 crawler 的 default_proxy
-    rss_proxy_url = advanced_rss.get("proxy_url", "") or advanced_crawler.get("default_proxy", "")
+    rss_proxy_url = advanced_rss.get("proxy_url", "") or advanced_crawler.get(
+        "default_proxy", ""
+    )
 
     # 新鲜度过滤配置
     freshness_filter = rss.get("freshness_filter", {})
@@ -150,10 +170,14 @@ def _load_rss_config(config_data: Dict) -> Dict:
     try:
         max_age_days = int(raw_max_age)
         if max_age_days < 0:
-            print(f"[警告] RSS freshness_filter.max_age_days 为负数 ({max_age_days})，使用默认值 3")
+            print(
+                f"[警告] RSS freshness_filter.max_age_days 为负数 ({max_age_days})，使用默认值 3"
+            )
             max_age_days = 3
     except (ValueError, TypeError):
-        print(f"[警告] RSS freshness_filter.max_age_days 格式错误 ({raw_max_age})，使用默认值 3")
+        print(
+            f"[警告] RSS freshness_filter.max_age_days 格式错误 ({raw_max_age})，使用默认值 3"
+        )
         max_age_days = 3
 
     # RSS 配置直接从 config.yaml 读取，不再支持环境变量
@@ -190,23 +214,35 @@ def _load_storage_config(config_data: Dict) -> Dict:
         "BACKEND": _get_env_str("STORAGE_BACKEND") or storage.get("backend", "auto"),
         "FORMATS": {
             "SQLITE": formats.get("sqlite", True),
-            "TXT": txt_enabled_env if txt_enabled_env is not None else formats.get("txt", True),
-            "HTML": html_enabled_env if html_enabled_env is not None else formats.get("html", True),
+            "TXT": txt_enabled_env
+            if txt_enabled_env is not None
+            else formats.get("txt", True),
+            "HTML": html_enabled_env
+            if html_enabled_env is not None
+            else formats.get("html", True),
         },
         "LOCAL": {
             "DATA_DIR": local.get("data_dir", "output"),
-            "RETENTION_DAYS": _get_env_int("LOCAL_RETENTION_DAYS") or local.get("retention_days", 0),
+            "RETENTION_DAYS": _get_env_int("LOCAL_RETENTION_DAYS")
+            or local.get("retention_days", 0),
         },
         "REMOTE": {
-            "ENDPOINT_URL": _get_env_str("S3_ENDPOINT_URL") or remote.get("endpoint_url", ""),
-            "BUCKET_NAME": _get_env_str("S3_BUCKET_NAME") or remote.get("bucket_name", ""),
-            "ACCESS_KEY_ID": _get_env_str("S3_ACCESS_KEY_ID") or remote.get("access_key_id", ""),
-            "SECRET_ACCESS_KEY": _get_env_str("S3_SECRET_ACCESS_KEY") or remote.get("secret_access_key", ""),
+            "ENDPOINT_URL": _get_env_str("S3_ENDPOINT_URL")
+            or remote.get("endpoint_url", ""),
+            "BUCKET_NAME": _get_env_str("S3_BUCKET_NAME")
+            or remote.get("bucket_name", ""),
+            "ACCESS_KEY_ID": _get_env_str("S3_ACCESS_KEY_ID")
+            or remote.get("access_key_id", ""),
+            "SECRET_ACCESS_KEY": _get_env_str("S3_SECRET_ACCESS_KEY")
+            or remote.get("secret_access_key", ""),
             "REGION": _get_env_str("S3_REGION") or remote.get("region", ""),
-            "RETENTION_DAYS": _get_env_int("REMOTE_RETENTION_DAYS") or remote.get("retention_days", 0),
+            "RETENTION_DAYS": _get_env_int("REMOTE_RETENTION_DAYS")
+            or remote.get("retention_days", 0),
         },
         "PULL": {
-            "ENABLED": pull_enabled_env if pull_enabled_env is not None else pull.get("enabled", False),
+            "ENABLED": pull_enabled_env
+            if pull_enabled_env is not None
+            else pull.get("enabled", False),
             "DAYS": _get_env_int("PULL_DAYS") or pull.get("days", 7),
         },
     }
@@ -229,29 +265,40 @@ def _load_webhook_config(config_data: Dict) -> Dict:
 
     return {
         # 飞书
-        "FEISHU_WEBHOOK_URL": _get_env_str("FEISHU_WEBHOOK_URL") or feishu.get("webhook_url", ""),
+        "FEISHU_WEBHOOK_URL": _get_env_str("FEISHU_WEBHOOK_URL")
+        or feishu.get("webhook_url", ""),
         # 钉钉
-        "DINGTALK_WEBHOOK_URL": _get_env_str("DINGTALK_WEBHOOK_URL") or dingtalk.get("webhook_url", ""),
+        "DINGTALK_WEBHOOK_URL": _get_env_str("DINGTALK_WEBHOOK_URL")
+        or dingtalk.get("webhook_url", ""),
         # 企业微信
-        "WEWORK_WEBHOOK_URL": _get_env_str("WEWORK_WEBHOOK_URL") or wework.get("webhook_url", ""),
-        "WEWORK_MSG_TYPE": _get_env_str("WEWORK_MSG_TYPE") or wework.get("msg_type", "markdown"),
+        "WEWORK_WEBHOOK_URL": _get_env_str("WEWORK_WEBHOOK_URL")
+        or wework.get("webhook_url", ""),
+        "WEWORK_MSG_TYPE": _get_env_str("WEWORK_MSG_TYPE")
+        or wework.get("msg_type", "markdown"),
         # Telegram
-        "TELEGRAM_BOT_TOKEN": _get_env_str("TELEGRAM_BOT_TOKEN") or telegram.get("bot_token", ""),
-        "TELEGRAM_CHAT_ID": _get_env_str("TELEGRAM_CHAT_ID") or telegram.get("chat_id", ""),
+        "TELEGRAM_BOT_TOKEN": _get_env_str("TELEGRAM_BOT_TOKEN")
+        or telegram.get("bot_token", ""),
+        "TELEGRAM_CHAT_ID": _get_env_str("TELEGRAM_CHAT_ID")
+        or telegram.get("chat_id", ""),
         # 邮件
         "EMAIL_FROM": _get_env_str("EMAIL_FROM") or email.get("from", ""),
         "EMAIL_PASSWORD": _get_env_str("EMAIL_PASSWORD") or email.get("password", ""),
         "EMAIL_TO": _get_env_str("EMAIL_TO") or email.get("to", ""),
-        "EMAIL_SMTP_SERVER": _get_env_str("EMAIL_SMTP_SERVER") or email.get("smtp_server", ""),
-        "EMAIL_SMTP_PORT": _get_env_str("EMAIL_SMTP_PORT") or email.get("smtp_port", ""),
+        "EMAIL_SMTP_SERVER": _get_env_str("EMAIL_SMTP_SERVER")
+        or email.get("smtp_server", ""),
+        "EMAIL_SMTP_PORT": _get_env_str("EMAIL_SMTP_PORT")
+        or email.get("smtp_port", ""),
         # ntfy
-        "NTFY_SERVER_URL": _get_env_str("NTFY_SERVER_URL") or ntfy.get("server_url") or "https://ntfy.sh",
+        "NTFY_SERVER_URL": _get_env_str("NTFY_SERVER_URL")
+        or ntfy.get("server_url")
+        or "https://ntfy.sh",
         "NTFY_TOPIC": _get_env_str("NTFY_TOPIC") or ntfy.get("topic", ""),
         "NTFY_TOKEN": _get_env_str("NTFY_TOKEN") or ntfy.get("token", ""),
         # Bark
         "BARK_URL": _get_env_str("BARK_URL") or bark.get("url", ""),
         # Slack
-        "SLACK_WEBHOOK_URL": _get_env_str("SLACK_WEBHOOK_URL") or slack.get("webhook_url", ""),
+        "SLACK_WEBHOOK_URL": _get_env_str("SLACK_WEBHOOK_URL")
+        or slack.get("webhook_url", ""),
     }
 
 
@@ -284,11 +331,13 @@ def _print_notification_sources(config: Dict) -> None:
         valid, count = validate_paired_configs(
             {"bot_token": tokens, "chat_id": chat_ids},
             "Telegram",
-            required_keys=["bot_token", "chat_id"]
+            required_keys=["bot_token", "chat_id"],
         )
         if valid and count > 0:
             count = min(count, max_accounts)
-            token_source = "环境变量" if os.environ.get("TELEGRAM_BOT_TOKEN") else "配置文件"
+            token_source = (
+                "环境变量" if os.environ.get("TELEGRAM_BOT_TOKEN") else "配置文件"
+            )
             notification_sources.append(f"Telegram({token_source}, {count}个账号)")
 
     if config["EMAIL_FROM"] and config["EMAIL_PASSWORD"] and config["EMAIL_TO"]:
@@ -300,16 +349,19 @@ def _print_notification_sources(config: Dict) -> None:
         tokens = parse_multi_account_config(config["NTFY_TOKEN"])
         if tokens:
             valid, count = validate_paired_configs(
-                {"topic": topics, "token": tokens},
-                "ntfy"
+                {"topic": topics, "token": tokens}, "ntfy"
             )
             if valid and count > 0:
                 count = min(count, max_accounts)
-                server_source = "环境变量" if os.environ.get("NTFY_SERVER_URL") else "配置文件"
+                server_source = (
+                    "环境变量" if os.environ.get("NTFY_SERVER_URL") else "配置文件"
+                )
                 notification_sources.append(f"ntfy({server_source}, {count}个账号)")
         else:
             count = min(len(topics), max_accounts)
-            server_source = "环境变量" if os.environ.get("NTFY_SERVER_URL") else "配置文件"
+            server_source = (
+                "环境变量" if os.environ.get("NTFY_SERVER_URL") else "配置文件"
+            )
             notification_sources.append(f"ntfy({server_source}, {count}个账号)")
 
     if config["BARK_URL"]:

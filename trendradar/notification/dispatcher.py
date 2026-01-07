@@ -95,43 +95,87 @@ class NotificationDispatcher:
         # 飞书
         if self.config.get("FEISHU_WEBHOOK_URL"):
             results["feishu"] = self._send_feishu(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # 钉钉
         if self.config.get("DINGTALK_WEBHOOK_URL"):
             results["dingtalk"] = self._send_dingtalk(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # 企业微信
         if self.config.get("WEWORK_WEBHOOK_URL"):
             results["wework"] = self._send_wework(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # Telegram（需要配对验证）
-        if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get("TELEGRAM_CHAT_ID"):
+        if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get(
+            "TELEGRAM_CHAT_ID"
+        ):
             results["telegram"] = self._send_telegram(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # ntfy（需要配对验证）
         if self.config.get("NTFY_SERVER_URL") and self.config.get("NTFY_TOPIC"):
             results["ntfy"] = self._send_ntfy(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # Bark
         if self.config.get("BARK_URL"):
             results["bark"] = self._send_bark(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # Slack
         if self.config.get("SLACK_WEBHOOK_URL"):
             results["slack"] = self._send_slack(
-                report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items
+                report_data,
+                report_type,
+                update_info,
+                proxy_url,
+                mode,
+                rss_items,
+                rss_new_items,
             )
 
         # 邮件（保持原有逻辑，已支持多收件人）
@@ -172,7 +216,7 @@ class NotificationDispatcher:
 
         for i, account in enumerate(accounts):
             if account:
-                account_label = f"账号{i+1}" if len(accounts) > 1 else ""
+                account_label = f"账号{i + 1}" if len(accounts) > 1 else ""
                 result = send_func(account, account_label=account_label, **kwargs)
                 results.append(result)
 
@@ -305,7 +349,7 @@ class NotificationDispatcher:
             token = telegram_tokens[i]
             chat_id = telegram_chat_ids[i]
             if token and chat_id:
-                account_label = f"账号{i+1}" if len(telegram_tokens) > 1 else ""
+                account_label = f"账号{i + 1}" if len(telegram_tokens) > 1 else ""
                 result = send_to_telegram(
                     bot_token=token,
                     chat_id=chat_id,
@@ -359,7 +403,7 @@ class NotificationDispatcher:
         for i, topic in enumerate(ntfy_topics):
             if topic:
                 token = get_account_at_index(ntfy_tokens, i, "") if ntfy_tokens else ""
-                account_label = f"账号{i+1}" if len(ntfy_topics) > 1 else ""
+                account_label = f"账号{i + 1}" if len(ntfy_topics) > 1 else ""
                 result = send_to_ntfy(
                     server_url=ntfy_server_url,
                     topic=topic,
@@ -493,9 +537,7 @@ class NotificationDispatcher:
 
         # 飞书
         if self.config.get("FEISHU_WEBHOOK_URL"):
-            results["feishu"] = self._send_rss_feishu(
-                rss_items, feeds_info, proxy_url
-            )
+            results["feishu"] = self._send_rss_feishu(rss_items, feeds_info, proxy_url)
 
         # 钉钉
         if self.config.get("DINGTALK_WEBHOOK_URL"):
@@ -510,7 +552,9 @@ class NotificationDispatcher:
             )
 
         # Telegram
-        if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get("TELEGRAM_CHAT_ID"):
+        if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get(
+            "TELEGRAM_CHAT_ID"
+        ):
             results["telegram"] = self._send_rss_markdown(
                 rss_items, feeds_info, proxy_url, "telegram"
             )
@@ -566,7 +610,7 @@ class NotificationDispatcher:
             if not webhook_url:
                 continue
 
-            account_label = f"账号{i+1}" if len(webhooks) > 1 else ""
+            account_label = f"账号{i + 1}" if len(webhooks) > 1 else ""
             try:
                 # 分批发送
                 batches = self.split_content_func(
@@ -584,14 +628,16 @@ class NotificationDispatcher:
                                 },
                                 "template": "green",
                             },
-                            "elements": [
-                                {"tag": "markdown", "content": batch_content}
-                            ],
+                            "elements": [{"tag": "markdown", "content": batch_content}],
                         },
                     }
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-                    resp = requests.post(webhook_url, json=payload, proxies=proxies, timeout=30)
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
+                    resp = requests.post(
+                        webhook_url, json=payload, proxies=proxies, timeout=30
+                    )
                     resp.raise_for_status()
 
                 print(f"✅ 飞书{account_label} RSS 通知发送成功")
@@ -625,7 +671,7 @@ class NotificationDispatcher:
             if not webhook_url:
                 continue
 
-            account_label = f"账号{i+1}" if len(webhooks) > 1 else ""
+            account_label = f"账号{i + 1}" if len(webhooks) > 1 else ""
             try:
                 batches = self.split_content_func(
                     content, self.config.get("DINGTALK_BATCH_SIZE", 20000)
@@ -641,8 +687,12 @@ class NotificationDispatcher:
                         },
                     }
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-                    resp = requests.post(webhook_url, json=payload, proxies=proxies, timeout=30)
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
+                    resp = requests.post(
+                        webhook_url, json=payload, proxies=proxies, timeout=30
+                    )
                     resp.raise_for_status()
 
                 print(f"✅ 钉钉{account_label} RSS 通知发送成功")
@@ -698,7 +748,7 @@ class NotificationDispatcher:
             if not webhook_url:
                 continue
 
-            account_label = f"账号{i+1}" if len(webhooks) > 1 else ""
+            account_label = f"账号{i + 1}" if len(webhooks) > 1 else ""
             try:
                 batches = self.split_content_func(
                     content, self.config.get("MESSAGE_BATCH_SIZE", 4000)
@@ -710,8 +760,12 @@ class NotificationDispatcher:
                         "markdown": {"content": batch_content},
                     }
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-                    resp = requests.post(webhook_url, json=payload, proxies=proxies, timeout=30)
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
+                    resp = requests.post(
+                        webhook_url, json=payload, proxies=proxies, timeout=30
+                    )
                     resp.raise_for_status()
 
                 print(f"✅ 企业微信{account_label} RSS 通知发送成功")
@@ -740,7 +794,7 @@ class NotificationDispatcher:
             if not token or not chat_id:
                 continue
 
-            account_label = f"账号{i+1}" if len(tokens) > 1 else ""
+            account_label = f"账号{i + 1}" if len(tokens) > 1 else ""
             try:
                 batches = self.split_content_func(
                     content, self.config.get("MESSAGE_BATCH_SIZE", 4000)
@@ -754,7 +808,9 @@ class NotificationDispatcher:
                         "parse_mode": "Markdown",
                     }
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
                     resp = requests.post(url, json=payload, proxies=proxies, timeout=30)
                     resp.raise_for_status()
 
@@ -785,7 +841,7 @@ class NotificationDispatcher:
                 continue
 
             token = tokens[i] if tokens and i < len(tokens) else ""
-            account_label = f"账号{i+1}" if len(topics) > 1 else ""
+            account_label = f"账号{i + 1}" if len(topics) > 1 else ""
 
             try:
                 batches = self.split_content_func(content, 3800)
@@ -796,10 +852,15 @@ class NotificationDispatcher:
                     if token:
                         headers["Authorization"] = f"Bearer {token}"
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
                     resp = requests.post(
-                        url, data=batch_content.encode("utf-8"),
-                        headers=headers, proxies=proxies, timeout=30
+                        url,
+                        data=batch_content.encode("utf-8"),
+                        headers=headers,
+                        proxies=proxies,
+                        timeout=30,
                     )
                     resp.raise_for_status()
 
@@ -824,7 +885,7 @@ class NotificationDispatcher:
             if not bark_url:
                 continue
 
-            account_label = f"账号{i+1}" if len(urls) > 1 else ""
+            account_label = f"账号{i + 1}" if len(urls) > 1 else ""
             try:
                 batches = self.split_content_func(
                     content, self.config.get("BARK_BATCH_SIZE", 3600)
@@ -835,7 +896,9 @@ class NotificationDispatcher:
                     body = urllib.parse.quote(batch_content)
                     url = f"{bark_url.rstrip('/')}/{title}/{body}"
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
                     resp = requests.get(url, proxies=proxies, timeout=30)
                     resp.raise_for_status()
 
@@ -859,7 +922,7 @@ class NotificationDispatcher:
             if not webhook_url:
                 continue
 
-            account_label = f"账号{i+1}" if len(webhooks) > 1 else ""
+            account_label = f"账号{i + 1}" if len(webhooks) > 1 else ""
             try:
                 batches = self.split_content_func(
                     content, self.config.get("SLACK_BATCH_SIZE", 4000)
@@ -878,8 +941,12 @@ class NotificationDispatcher:
                         ]
                     }
 
-                    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-                    resp = requests.post(webhook_url, json=payload, proxies=proxies, timeout=30)
+                    proxies = (
+                        {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                    )
+                    resp = requests.post(
+                        webhook_url, json=payload, proxies=proxies, timeout=30
+                    )
                     resp.raise_for_status()
 
                 print(f"✅ Slack{account_label} RSS 通知发送成功")

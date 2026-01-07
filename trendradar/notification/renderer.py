@@ -189,9 +189,13 @@ def render_dingtalk_content(
             sequence_display = f"[{i + 1}/{total_count}]"
 
             if count >= 10:
-                stats_content += f"🔥 {sequence_display} **{word}** : **{count}** 条\n\n"
+                stats_content += (
+                    f"🔥 {sequence_display} **{word}** : **{count}** 条\n\n"
+                )
             elif count >= 5:
-                stats_content += f"📈 {sequence_display} **{word}** : **{count}** 条\n\n"
+                stats_content += (
+                    f"📈 {sequence_display} **{word}** : **{count}** 条\n\n"
+                )
             else:
                 stats_content += f"📌 {sequence_display} **{word}** : {count} 条\n\n"
 
@@ -346,7 +350,9 @@ def render_rss_feishu_content(
         text_content += f"\n{separator}\n\n"
 
     now = get_time_func() if get_time_func else datetime.now()
-    text_content += f"<font color='grey'>更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}</font>"
+    text_content += (
+        f"<font color='grey'>更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}</font>"
+    )
 
     return text_content
 
@@ -436,7 +442,9 @@ def render_rss_markdown_content(
     now = get_time_func() if get_time_func else datetime.now()
 
     if not rss_items:
-        return f"📭 暂无新的 RSS 订阅内容\n\n更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
+        return (
+            f"📭 暂无新的 RSS 订阅内容\n\n更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
     # 按 feed_id 分组
     feeds_map: Dict[str, list] = {}
@@ -478,6 +486,7 @@ def render_rss_markdown_content(
 
 
 # === RSS 内容渲染辅助函数（用于合并推送） ===
+
 
 def _render_rss_section_feishu(rss_items: list, separator: str = "---") -> str:
     """渲染 RSS 内容区块（飞书格式，用于合并推送）"""
