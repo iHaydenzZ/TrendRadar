@@ -26,6 +26,24 @@
 - If you add tests, place them under `tests/` and document the runner in this file or the README.
 
 ## Commit & Pull Request Guidelines
-- Use GitHub's commit message convention: short imperative summary (<= 72 chars), optional body separated by a blank line, and issue references like `#123` when relevant (e.g., "Fix crawler cron schedule").
+- Use GitHub's commit message convention: short imperative summary (<= 72 chars), optional body separated by a blank line, and issue references like `#123` when relevant.
+    - Examples:
+    ```bash
+        - feat: add email notifications on new direct messages
+        - feat(shopping cart): add the amazing button
+
+        - feat!: remove ticket list endpoint          
+                refers to JIRA-1337
+                BREAKING CHANGE: ticket endpoints no longer supports list all entities.
+        - fix(shopping-cart): prevent order an empty shopping cart
+        - fix(api): fix wrong calculation of request body checksum
+        - fix: add missing parameter to service call
+        The error occurred due to <reasons>.
+        - perf: decrease memory footprint for determine unique visitors by using HyperLogLog
+        - build: update dependencies
+        - build(release): bump version to 1.0.0
+        - refactor: implement fibonacci number calculation as recursion
+        - style: remove empty line
+    ```
 - PRs should include a concise summary, note config or schema changes, and attach sample output (log snippet or report screenshot) when formatting changes.
 - Keep secrets out of commits; use environment variables or local config files.
