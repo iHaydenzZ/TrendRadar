@@ -189,10 +189,10 @@ notification:
   #   - RSS 源内容较少，希望全部展示而非只显示关键词匹配的
   # 注意：同一新闻可能同时出现在关键词匹配区和独立展示区
   standalone_display:
-    enabled: false                    # 是否启用独立展示区
-    platforms: []                     # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
+    enabled: true                    # 是否启用独立展示区
+    platforms: ["cankaoxiaoxi"]                     # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
     rss_feeds: []                     # RSS 源 ID 列表（如 ["hacker-news"]）
-    max_items: 20                     # 每个源最多展示条数（0=不限制）
+    max_items: 10                     # 每个源最多展示条数（0=不限制）
 
   # 推送渠道配置
   channels:
@@ -293,10 +293,10 @@ ai_analysis:
   #   - openai: OpenAI
   #   - gemini: Google Gemini
   #   - custom: 自定义 OpenAI 兼容接口（需填写完整 base_url）
-  provider: "deepseek"              # 提供商
+  provider: "gemini"              # 提供商
   api_key: ""                       # API Key（建议使用环境变量 AI_API_KEY）
 
-  model: "deepseek-chat"            # 模型名称
+  model: "gemini-1.5-flash"            # 模型名称
                                     # DeepSeek: deepseek-chat, deepseek-reasoner
                                     # OpenAI: o3-mini, o1, gpt-4o
                                     # Gemini: gemini-2.5-flash, gemini-2.5-pro
@@ -321,7 +321,7 @@ ai_analysis:
                                       # GitHub Action 约 0.1 元/天
                                       # Docker 部署约 0.2 元/天
 
-  include_rss: false                # 是否包含 RSS 内容进行分析
+  include_rss: true                # 是否包含 RSS 内容进行分析
 
   # 提示词配置文件路径（相对于 config 目录）
   prompt_file: "ai_analysis_prompt.txt"
@@ -356,8 +356,8 @@ advanced:
   # 排序权重（用于重新排序不同平台的热搜）
   # 合起来等于 1
   weight:
-    rank: 0.6                         # 排名权重
-    frequency: 0.3                    # 频次权重
+    rank: 0.4                         # 排名权重
+    frequency: 0.5                    # 频次权重
     hotness: 0.1                      # 热度权重
 
   # 多账号限制
