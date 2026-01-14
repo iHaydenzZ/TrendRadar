@@ -44,14 +44,14 @@ platforms:
     name: "GitHub"
   - id: "solidot"
     name: "Solidot"
-  - id: "v2ex"
-    name: "V2EX"
-  - id: "nowcoder"
-    name: "牛客网"
-  - id: "sspai"
-    name: "少数派"
-  - id: "producthunt"
-    name: "ProductHunt"
+  # - id: "v2ex"
+  #   name: "V2EX"
+  # - id: "nowcoder"
+  #   name: "牛客网"
+  # - id: "sspai"
+  #   name: "少数派"
+  # - id: "producthunt"
+  #   name: "ProductHunt"
   - id: "zhihu"
     name: "知乎"
 
@@ -136,7 +136,7 @@ report:
                                       # platform: 按平台/来源分组显示
   rank_threshold: 5                   # 排名高亮阈值
   sort_by_position_first: false       # true=按配置位置排序，false=按热点条数排序
-  max_news_per_keyword: 0             # 每个关键词最大显示数量（0=不限制）
+  max_news_per_keyword: 15             # 每个关键词最大显示数量（0=不限制）
   reverse_content_order: false        # false=热点词汇统计在前，true=新增热点新闻在前
 
 
@@ -300,16 +300,16 @@ ai_analysis:
                                     # 其他提供商必须填写完整 URL
                                     # 示例: https://api.openai.com/v1/chat/completions
 
-  timeout: 90                       # 请求超时（秒）
+  timeout: 120                       # 请求超时（秒）
 
   # 推送模式（仅在 enabled: true 时生效）
   # - only_analysis: 仅推送 AI 分析结果（若开启了“独立展示区”则一并保留，屏蔽原始热榜/RSS 列表）
   # - both: 两者都推送（分析追加在原始内容后）
   # 注：如果不需要 AI 分析，请将上方 enabled 设为 false，无需使用 push_mode 控制
-  push_mode: "both"
+  push_mode: "only_analysis"
 
   # 分析选项
-  max_news_for_analysis: 50         # 参与分析的新闻数量上限（控制成本关键项）
+  max_news_for_analysis: 100         # 参与分析的新闻数量上限（控制成本关键项）
                                     # api 成本估算 (仅供参考)
                                       # 按默认推送频率和模型
                                       # GitHub Action 约 0.1 元/天
