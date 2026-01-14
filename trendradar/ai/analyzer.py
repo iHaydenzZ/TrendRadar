@@ -444,8 +444,9 @@ class AIAnalyzer:
         payload = {
             "contents": contents,
             "generationConfig": {
-                "temperature": 0.7,
-                "maxOutputTokens": 2000,
+                "temperature": 0.4,
+                "maxOutputTokens": 4000,
+                "responseMimeType": "application/json",
             },
         }
 
