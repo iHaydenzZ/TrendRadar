@@ -8,6 +8,7 @@ AI 分析器模块
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
@@ -460,65 +461,68 @@ class AIAnalyzer:
         return data["candidates"][0]["content"]["parts"][0]["text"]
 
     def _parse_response(self, response: str) -> AIAnalysisResult:
-        """解析 AI 响应"""
-        result = AIAnalysisResult(raw_response=response)
+            """解析 AI 响应（增强版）"""
+            result = AIAnalysisResult(raw_response=response)
 
-        if not response or not response.strip():
-            result.error = "AI 返回空响应"
+            if not response or not response.strip():
+                result.error = "AI 返回空响应"
+                return result
+
+            try:
+                json_str = response.strip()
+
+                # 1. 优先尝试提取 ```json ... ``` 代码块中的内容
+                # 使用正则，非贪婪匹配，同时也匹配不带 json 标记的 ``` 块
+                code_block_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
+                match = re.search(code_block_pattern, json_str, re.DOTALL)
+                
+                if match:
+                    json_str = match.group(1)
+                else:
+                    # 2. 如果没找到代码块，回退到寻找最外层大括号的方法
+                    start_idx = json_str.find("{")
+                    end_idx = json_str.rfind("}")
+                    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                        json_str = json_str[start_idx : end_idx + 1]
+                
+                # 3. 预处理：清理可能的非法字符
+                # 有时候 AI 会在末尾多加逗号 (e.g., "key": "value",})，这是无效 JSON
+                # 简单的正则尝试清理末尾逗号（风险较低的替换）
+                json_str = re.sub(r",\s*}", "}", json_str)
+                json_str = re.sub(r",\s*]", "]", json_str)
+
+                # 4. 解析 JSON
+                # strict=False 允许字符串中包含控制字符（如换行符），这对 LLM 输出很关键
+                data = json.loads(json_str, strict=False)
+
+                result.summary = data.get("summary", "")
+                result.keyword_analysis = data.get("keyword_analysis", "")
+                result.sentiment = data.get("sentiment", "")
+                result.cross_platform = data.get("cross_platform", "")
+                result.impact = data.get("impact", "")
+                result.signals = data.get("signals", "")
+                result.conclusion = data.get("conclusion", "")
+                result.success = True
+
+            except Exception as e:
+                # 解析失败，保留错误信息，但为了不展示丑陋的原始 JSON，
+                # 我们可以尝试手动提取 summary 字段作为降级方案
+                import traceback
+                print(f"JSON 解析失败: {e}\n{traceback.format_exc()}")
+                
+                result.error = f"解析错误: {str(e)}"
+                
+                # 降级方案：如果 JSON 解析彻底失败，尝试用正则硬抓取 summary 内容
+                # 这样至少能显示出摘要，而不是乱码
+                try:
+                    summary_match = re.search(r'"summary"\s*:\s*"(.*?)"', response, re.DOTALL)
+                    if summary_match:
+                        result.summary = summary_match.group(1)
+                        result.success = True  # 标记为成功，至少有一部分能看
+                    else:
+                        # 只有在连正则都抓不到时，才显示原始文本
+                        result.summary = response[:1000]
+                except Exception:
+                    result.summary = response[:1000]
+
             return result
-
-        # 尝试解析 JSON
-        try:
-            # 提取 JSON 部分
-            json_str = response
-
-            # 尝试提取 JSON 内容
-            # 策略1：寻找第一个 { 和最后一个 } (最稳健的方式，可自动忽略 Markdown 标记和首尾废话)
-            start_idx = json_str.find("{")
-            end_idx = json_str.rfind("}")
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                json_str = json_str[start_idx : end_idx + 1]
-            else:
-                # 策略2：备选清理（处理用户反馈的 ```json 情况）
-                # 强行去掉 Markdown 的代码块标记
-                json_str = json_str.replace("```json", "").replace("```", "").strip()
-
-            # 清理 JSON 字符串
-            json_str = json_str.strip()
-            if not json_str:
-                raise ValueError("提取的 JSON 内容为空")
-
-            data = json.loads(json_str)
-
-            result.summary = data.get("summary", "")
-            result.keyword_analysis = data.get("keyword_analysis", "")
-            result.sentiment = data.get("sentiment", "")
-            result.cross_platform = data.get("cross_platform", "")
-            result.impact = data.get("impact", "")
-            result.signals = data.get("signals", "")
-            result.conclusion = data.get("conclusion", "")
-            result.success = True
-
-        except json.JSONDecodeError as e:
-            # JSON 解析失败，记录详细错误但仍使用原始文本
-            error_context = (
-                json_str[max(0, e.pos - 30) : e.pos + 30] if json_str and e.pos else ""
-            )
-            result.error = f"JSON 解析错误 (位置 {e.pos}): {e.msg}"
-            if error_context:
-                result.error += f"，上下文: ...{error_context}..."
-            # 使用原始响应作为 summary
-            result.summary = response[:1000] if len(response) > 1000 else response
-            result.success = True  # 仍标记为成功，因为有内容可展示
-        except (IndexError, KeyError, TypeError, ValueError) as e:
-            # 其他解析错误
-            result.error = f"响应解析错误: {type(e).__name__}: {str(e)}"
-            result.summary = response[:1000] if len(response) > 1000 else response
-            result.success = True
-        except Exception as e:
-            # 未知错误
-            result.error = f"解析时发生未知错误: {type(e).__name__}: {str(e)}"
-            result.summary = response[:1000] if len(response) > 1000 else response
-            result.success = True
-
-        return result
