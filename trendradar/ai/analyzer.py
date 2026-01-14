@@ -472,22 +472,16 @@ class AIAnalyzer:
             # 提取 JSON 部分
             json_str = response
 
-            # 尝试提取 ```json ... ``` 代码块
-            if "```json" in response:
-                parts = response.split("```json", 1)
-                if len(parts) > 1:
-                    code_block = parts[1]
-                    # 查找结束的 ```
-                    end_idx = code_block.find("```")
-                    if end_idx != -1:
-                        json_str = code_block[:end_idx]
-                    else:
-                        json_str = code_block  # 没有结束标记，使用剩余内容
-            # 尝试提取 ``` ... ``` 代码块
-            elif "```" in response:
-                parts = response.split("```", 2)  # 最多分割2次
-                if len(parts) >= 2:
-                    json_str = parts[1]
+            # 尝试提取 JSON 内容
+            # 策略1：寻找第一个 { 和最后一个 } (最稳健的方式，可自动忽略 Markdown 标记和首尾废话)
+            start_idx = json_str.find("{")
+            end_idx = json_str.rfind("}")
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                json_str = json_str[start_idx : end_idx + 1]
+            else:
+                # 策略2：备选清理（处理用户反馈的 ```json 情况）
+                # 强行去掉 Markdown 的代码块标记
+                json_str = json_str.replace("```json", "").replace("```", "").strip()
 
             # 清理 JSON 字符串
             json_str = json_str.strip()
