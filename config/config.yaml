@@ -13,7 +13,7 @@ app:
   #   - America/New_York (美东时间 UTC-5/-4)
   #   - Europe/London (伦敦时间 UTC+0/+1)
   # 完整时区列表: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-  timezone: "Asia/Shanghai"
+  timezone: "Australia/Sydney"          # 时区
   show_version_update: true           # 显示版本更新提示
 
 
@@ -30,24 +30,36 @@ platforms:
   sources:
     - id: "toutiao"
       name: "今日头条"
-    - id: "baidu"
-      name: "百度热搜"
     - id: "wallstreetcn-hot"
       name: "华尔街见闻"
-    - id: "thepaper"
-      name: "澎湃新闻"
+    - id: "zaobao"
+      name: "联合早报"
+    - id: "cankaoxiaoxi"
+      name: "参考消息"
+    - id: "sputniknewscn"
+      name: "卫星通讯社"
     - id: "bilibili-hot-search"
       name: "bilibili 热搜"
     - id: "cls-hot"
       name: "财联社热门"
-    - id: "ifeng"
-      name: "凤凰网"
-    - id: "tieba"
-      name: "贴吧"
     - id: "weibo"
       name: "微博"
-    - id: "douyin"
-      name: "抖音"
+    - id: "ithome"
+      name: "IT之家"
+    - id: "juejin"
+      name: "掘金"
+    - id: "github"
+      name: "GitHub"
+    - id: "solidot"
+      name: "Solidot"
+    # - id: "v2ex"
+    #   name: "V2EX"
+    # - id: "nowcoder"
+    #   name: "牛客网"
+    # - id: "sspai"
+    #   name: "少数派"
+    # - id: "producthunt"
+    #   name: "ProductHunt"
     - id: "zhihu"
       name: "知乎"
 
@@ -89,12 +101,12 @@ rss:
     - id: "hacker-news"
       name: "Hacker News"
       url: "https://hnrss.org/frontpage"
-      # max_age_days: 1               # 示例：只推送1天内的文章
+      max_age_days: 1               # 示例：只推送1天内的文章
 
     - id: "ruanyifeng"
       name: "阮一峰的网络日志"
       url: "http://www.ruanyifeng.com/blog/atom.xml"
-      # max_age_days: 7               # 示例：推送7天内的文章（更新较慢的博客）
+      max_age_days: 7               # 示例：推送7天内的文章（更新较慢的博客）
     
     - id: "yahoo-finance"
       name: "雅虎财经"
@@ -128,7 +140,7 @@ rss:
 #    • 适用场景：避免重复信息干扰
 # ===============================================================
 report:
-  mode: "current"                     # 可选: daily | current | incremental
+  mode: "daily"                     # 可选: daily | current | incremental
   display_mode: "keyword"             # 分组维度: keyword | platform
                                       # keyword: 按关键词分组显示（默认）
                                       # platform: 按平台/来源分组显示
@@ -140,7 +152,7 @@ report:
 
   rank_threshold: 5                   # 排名高亮阈值
 
-  max_news_per_keyword: 0             # 每个关键词最大显示数量（0=不限制）
+  max_news_per_keyword: 15             # 每个关键词最大显示数量（0=不限制）
 
 
 # ===============================================================
@@ -178,7 +190,7 @@ display:
                                       # 开启后将对 RSS 进行关键词分析并在通知中展示
                                       # 关闭后跳过分析，但独立展示区不受影响
 
-    standalone: false                 # 独立展示区（完整热榜/RSS，不受关键词过滤）
+    standalone: true                 # 独立展示区（完整热榜/RSS，不受关键词过滤）
     ai_analysis: true                 # AI 分析区域
 
   # 📋 独立展示区配置（仅在 regions.standalone: true 时生效）
@@ -188,7 +200,7 @@ display:
   #   - RSS 源内容较少，希望全部展示而非只显示关键词匹配的
   # 注意：同一新闻可能同时出现在关键词匹配区和独立展示区
   standalone:
-    platforms: []                     # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
+    platforms: ["cankaoxiaoxi"]                     # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
     rss_feeds: []                     # RSS 源 ID 列表（如 ["hacker-news"]）
     max_items: 20                     # 每个源最多展示条数（0=不限制）
 
@@ -328,10 +340,10 @@ ai:
   #   - openai: OpenAI
   #   - gemini: Google Gemini
   #   - custom: 自定义 OpenAI 兼容接口（需填写完整 base_url）
-  provider: "deepseek"              # 提供商
+  provider: "gemini"              # 提供商
   api_key: ""                       # API Key（建议使用环境变量 AI_API_KEY）
 
-  model: "deepseek-chat"            # 模型名称
+  model: "gemini-2.5-flash"         # 模型名称
                                     # DeepSeek: deepseek-chat, deepseek-reasoner
                                     # OpenAI: o3-mini, o1, gpt-4o
                                     # Gemini: gemini-2.5-flash, gemini-2.5-pro
@@ -341,7 +353,7 @@ ai:
                                     # 其他提供商必须填写完整 URL
                                     # 示例: https://api.openai.com/v1/chat/completions
 
-  timeout: 90                       # 请求超时（秒）
+  timeout: 120                       # 请求超时（秒）
 
   # AI 参数配置
   temperature: 1.0                  # 采样温度 (0.0-2.0)
@@ -387,7 +399,7 @@ ai_analysis:
   prompt_file: "ai_analysis_prompt.txt"
 
   # 分析内容配置
-  max_news_for_analysis: 50         # 参与分析的新闻数量上限（控制成本关键项）
+  max_news_for_analysis: 100         # 参与分析的新闻数量上限（控制成本关键项）
                                     # 当前默认的【报告模式】是【当前榜单模式】（current），也就是只分析当前在热榜的新闻
                                     # 如果需要让报告呈现出更有参考价值的完整一天的趋势，且你的 token 充裕
                                       # 可开启 daily（当日汇总模式）
@@ -400,7 +412,7 @@ ai_analysis:
                                       # GitHub Action 部署默认推送约 20 次（每小时推送一次）， 约 0.1 元/天
                                       # Docker 部署默认推送 48 次(每半小时推送一次)， 约 0.2 元/天
 
-  include_rss: false                 # 是否包含 RSS 内容进行分析
+  include_rss: true                 # 是否包含 RSS 内容进行分析
 
   include_rank_timeline: true      # 是否传递完整排名时间线
                                     # false: 使用简化格式（排名范围+时间范围+出现次数）
@@ -453,8 +465,8 @@ advanced:
   # 排序权重（用于重新排序不同平台的热搜）
   # 合起来等于 1
   weight:
-    rank: 0.6                         # 排名权重
-    frequency: 0.3                    # 频次权重
+    rank: 0.4                         # 排名权重
+    frequency: 0.5                    # 频次权重
     hotness: 0.1                      # 热度权重
 
   # 多账号限制
