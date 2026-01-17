@@ -109,10 +109,7 @@ def read_all_today_titles_from_storage(
 
         for source_id, news_list in news_data.items.items():
             # 按平台过滤
-            if (
-                current_platform_ids is not None
-                and source_id not in current_platform_ids
-            ):
+            if current_platform_ids is not None and source_id not in current_platform_ids:
                 continue
 
             # 获取来源名称
@@ -125,10 +122,11 @@ def read_all_today_titles_from_storage(
 
             for item in news_list:
                 title = item.title
-                ranks = getattr(item, "ranks", [item.rank])
-                first_time = getattr(item, "first_time", item.crawl_time)
-                last_time = getattr(item, "last_time", item.crawl_time)
-                count = getattr(item, "count", 1)
+                ranks = getattr(item, 'ranks', [item.rank])
+                first_time = getattr(item, 'first_time', item.crawl_time)
+                last_time = getattr(item, 'last_time', item.crawl_time)
+                count = getattr(item, 'count', 1)
+                rank_timeline = getattr(item, 'rank_timeline', [])
 
                 all_results[source_id][title] = {
                     "ranks": ranks,
@@ -143,6 +141,7 @@ def read_all_today_titles_from_storage(
                     "ranks": ranks,
                     "url": item.url or "",
                     "mobileUrl": item.mobile_url or "",
+                    "rank_timeline": rank_timeline,
                 }
 
         return all_results, final_id_to_name, title_info
@@ -214,10 +213,7 @@ def detect_latest_new_titles_from_storage(
         # 步骤1：收集最新批次的标题（last_crawl_time = latest_time 的标题）
         latest_titles = {}
         for source_id, news_list in latest_data.items.items():
-            if (
-                current_platform_ids is not None
-                and source_id not in current_platform_ids
-            ):
+            if current_platform_ids is not None and source_id not in current_platform_ids:
                 continue
             latest_titles[source_id] = {}
             for item in news_list:
@@ -232,24 +228,19 @@ def detect_latest_new_titles_from_storage(
         # 这样即使同一标题有多条记录（URL 不同），只要任何一条是历史的，该标题就算历史
         historical_titles = {}
         for source_id, news_list in all_data.items.items():
-            if (
-                current_platform_ids is not None
-                and source_id not in current_platform_ids
-            ):
+            if current_platform_ids is not None and source_id not in current_platform_ids:
                 continue
 
             historical_titles[source_id] = set()
             for item in news_list:
-                first_time = getattr(item, "first_time", item.crawl_time)
+                first_time = getattr(item, 'first_time', item.crawl_time)
                 # 如果该记录的首次出现时间早于最新批次，则该标题是历史标题
                 if first_time < latest_time:
                     historical_titles[source_id].add(item.title)
 
         # 检查是否是当天第一次抓取（没有任何历史标题）
         # 如果所有平台的历史标题集合都为空，说明只有一个抓取批次，不应该有"新增"标题
-        has_historical_data = any(
-            len(titles) > 0 for titles in historical_titles.values()
-        )
+        has_historical_data = any(len(titles) > 0 for titles in historical_titles.values())
         if not has_historical_data:
             return {}
 
@@ -289,30 +280,8 @@ def detect_latest_new_titles(
     Returns:
         Dict: 新增标题 {source_id: {title: title_data}}
     """
-    new_titles = detect_latest_new_titles_from_storage(
-        storage_manager, current_platform_ids
-    )
+    new_titles = detect_latest_new_titles_from_storage(storage_manager, current_platform_ids)
     if new_titles and not quiet:
         total_new = sum(len(titles) for titles in new_titles.values())
         print(f"[存储] 从存储后端检测到 {total_new} 条新增标题")
     return new_titles
-
-
-def is_first_crawl_today(output_dir: str, date_folder: str) -> bool:
-    """
-    检测是否是当天第一次爬取
-
-    Args:
-        output_dir: 输出目录
-        date_folder: 日期文件夹名称
-
-    Returns:
-        bool: 是否是当天第一次爬取
-    """
-    txt_dir = Path(output_dir) / date_folder / "txt"
-
-    if not txt_dir.exists():
-        return True
-
-    files = sorted([f for f in txt_dir.iterdir() if f.suffix == ".txt"])
-    return len(files) <= 1

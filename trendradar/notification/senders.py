@@ -33,7 +33,7 @@ from .batch import add_batch_headers, get_max_batch_header_size
 from .formatters import convert_markdown_to_mrkdwn, strip_markdown
 
 
-def _render_ai_analysis(ai_analysis: Any, channel: str, ai_push_mode: str) -> str:
+def _render_ai_analysis(ai_analysis: Any, channel: str) -> str:
     """渲染 AI 分析内容为指定渠道格式"""
     if not ai_analysis:
         return ""
@@ -99,7 +99,7 @@ def send_to_feishu(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -135,7 +135,7 @@ def send_to_feishu(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "feishu", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "feishu")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -235,7 +235,7 @@ def send_to_dingtalk(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -270,7 +270,7 @@ def send_to_dingtalk(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "dingtalk", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "dingtalk")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -367,7 +367,7 @@ def send_to_wework(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -414,7 +414,7 @@ def send_to_wework(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "wework", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "wework")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -513,7 +513,7 @@ def send_to_telegram(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -551,7 +551,7 @@ def send_to_telegram(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "telegram", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "telegram")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -641,8 +641,6 @@ def send_to_email(
     custom_smtp_port: Optional[int] = None,
     *,
     get_time_func: Callable = None,
-    ai_analysis: Any = None,
-    ai_push_mode: str = "both",
 ) -> bool:
     """
     发送邮件通知
@@ -659,6 +657,9 @@ def send_to_email(
 
     Returns:
         bool: 发送是否成功
+
+    Note:
+        AI 分析内容已在 HTML 生成时嵌入，无需再追加
     """
     try:
         if not html_file_path or not Path(html_file_path).exists():
@@ -668,12 +669,6 @@ def send_to_email(
         print(f"使用HTML文件: {html_file_path}")
         with open(html_file_path, "r", encoding="utf-8") as f:
             html_content = f.read()
-
-        # 追加 AI 分析内容到 HTML
-        if ai_analysis:
-            ai_content = _render_ai_analysis(ai_analysis, "email", ai_push_mode)
-            if ai_content:
-                html_content = html_content.replace("</body>", f"{ai_content}</body>")
 
         domain = from_email.split("@")[-1].lower()
 
@@ -812,7 +807,7 @@ def send_to_ntfy(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -874,7 +869,7 @@ def send_to_ntfy(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "ntfy", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "ntfy")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -1036,7 +1031,7 @@ def send_to_bark(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -1082,7 +1077,7 @@ def send_to_bark(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "bark", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "bark")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -1225,7 +1220,7 @@ def send_to_slack(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -1260,7 +1255,7 @@ def send_to_slack(
     ai_content = None
     ai_stats = None
     if ai_analysis:
-        ai_content = _render_ai_analysis(ai_analysis, "slack", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "slack")
         # 提取 AI 分析统计数据（只要 AI 分析成功就显示）
         if getattr(ai_analysis, "success", False):
             ai_stats = {
@@ -1353,7 +1348,7 @@ def send_to_generic_webhook(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
-    ai_push_mode: str = "both",
+    display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
 ) -> bool:
     """
@@ -1393,7 +1388,7 @@ def send_to_generic_webhook(
     ai_stats = None
     if ai_analysis:
         # 通用 Webhook 使用 markdown 格式渲染 AI 分析
-        ai_content = _render_ai_analysis(ai_analysis, "wework", ai_push_mode)
+        ai_content = _render_ai_analysis(ai_analysis, "wework")
         # 提取 AI 分析统计数据
         if getattr(ai_analysis, "success", False):
             ai_stats = {
