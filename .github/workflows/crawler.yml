@@ -158,6 +158,7 @@ jobs:
           AI_ANALYSIS_ENABLED: ${{ secrets.AI_ANALYSIS_ENABLED }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_MODEL: ${{ secrets.AI_MODEL }}
           AI_API_BASE: ${{ secrets.AI_API_BASE }}
           # 远程存储配置
